@@ -1,0 +1,1 @@
+export { routes } from './lib/dashboard-feature-shell/dashboard-feature-shell.routes';
