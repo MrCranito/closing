@@ -167,8 +167,6 @@ export class FeatureComponent {
     `;
   }
   
-  
-  
   private onNodeClick(node: TreeNode): void {
     console.log('Node clicked:', node);
     this.highlightedNode = node; // Set the clicked node as highlighted

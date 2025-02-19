@@ -29,7 +29,6 @@
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
-    "@tailwindcss/postcss": "^4.0.7",
     "@types/d3": "^7.4.3",
     "@types/jest": "^29.5.12",
     "@types/node": "18.16.9",
@@ -44,6 +43,7 @@
     "jest-preset-angular": "~14.4.0",
     "nx": "20.4.4",
     "prettier": "^2.6.2",
+    "tailwindcss": "^3.0.2",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
@@ -73,7 +73,6 @@
     "primeng": "^19.0.6",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~7.8.0",
-    "tailwindcss": "^4.0.7",
     "tailwindcss-primeui": "^0.4.0",
     "zone.js": "~0.15.0"
   }
