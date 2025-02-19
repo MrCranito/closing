@@ -8,6 +8,11 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
+type LinkData = {
+  source: d3.HierarchyPointNode<TreeNode>;
+  target: d3.HierarchyPointNode<TreeNode>;
+};
+
 
 @Component({
   selector: 'dashboard-feature',
@@ -72,8 +77,13 @@ export class FeatureComponent {
   }
   
   private renderTree(): void {
-    const treeLayout = d3.tree<TreeNode>().nodeSize([100, 200]).separation(() => 0.5);
+  // Adjust nodeSize to account for dynamic text size
+  const treeLayout = d3.tree<TreeNode>()
+    .nodeSize([150, 100])  // Fixed width for node, but dynamic height based on content
+    .separation((a, b) => a.parent === b.parent ? 1.5 : 2);  // Increase separation between nodes    const root = d3.hierarchy(this.treeData, d => d.children);
+    
     const root = d3.hierarchy(this.treeData, d => d.children);
+
     treeLayout(root);
   
     const nodes = root.descendants();
@@ -83,12 +93,14 @@ export class FeatureComponent {
   
     // Draw links
     this.container.selectAll('.link')
-      .data(links)
-      .enter()
-      .append('path')
-      .attr('class', 'link')
-      .attr('d', this.elbow)
-      .style('stroke', '#999');
+    .data(links)
+    .enter()
+    .append('path')
+    .attr('class', 'link')
+    .attr('d', (d: LinkData) => this.createForkedLink(d))
+    .style('stroke', '#999')
+    .style('fill', 'none')
+    .style('stroke-width', 2);
   
     // Draw nodes
     const nodeGroup = this.container.selectAll('.node')
@@ -98,26 +110,64 @@ export class FeatureComponent {
       .attr('class', 'node')
       .attr('transform', (d: d3.HierarchyPointNode<TreeNode>) => `translate(${d.x},${d.y})`)
       .on('click', (_: Event, d: d3.HierarchyPointNode<TreeNode>) => this.onNodeClick(d.data));
+
+       // Append a placeholder rect (initially small)
+    const rect = nodeGroup.append('rect')
+    .attr('rx', 5) // Rounded corners
+    .attr('ry', 5)
+    .style('fill', 'white')
+    .style('stroke', 'black'); // Border color
   
-    nodeGroup.append('rect')
-      .attr('width', 150)
-      .attr('height', 40)
-      .attr('x', -75)
-      .attr('y', -20)
-      .style('fill', 'lightblue')
-      .style('stroke', (d: d3.HierarchyPointNode<TreeNode>) => d.data === this.highlightedNode ? 'orange' : 'none'); // Highlight the clicked node
-  
-    nodeGroup.append('text')
-      .attr('dx', -65)
-      .attr('dy', 5)
+    // Append text
+    const text = nodeGroup.append('text')
+      .attr('text-anchor', 'middle') // Center text horizontally
+      .attr('dy', 5) // Adjust vertical alignment
+      .style('font-size', '14px')
       .text((d: d3.HierarchyPointNode<TreeNode>) => d.data.name);
   
-    // Append plus button next to clicked node if available
-    if (this.highlightedNode) {
+   
+  
+    // Update rectangle size **after** rendering text (to get correct dimensions)
+    nodeGroup.each((_: d3.HierarchyPointNode<TreeNode>, i: number, nodes: SVGGElement[]) => {
+      const group = d3.select(nodes[i]); // Select current group
+      const textElement = group.select('text').node() as SVGTextElement;
+      if (!textElement) return;
+  
+      const bbox = textElement.getBBox(); // Get text dimensions
+      const padding = 10; // Padding around text
+  
+      // Update rectangle size based on text
+      group.select('rect')
+        .attr('x', -bbox.width / 2 - padding) // Centering
+        .attr('y', -bbox.height / 2 - padding / 2)
+        .attr('width', bbox.width + padding * 2)
+        .attr('height', bbox.height + padding);
+    });
+
+     // Append plus button next to clicked node if available
+     if (this.highlightedNode) {
       this.createPlusButton(this.highlightedNode);
       this.createDeleteButton(this.highlightedNode);
     }
   }
+
+  private createForkedLink(d: LinkData): string {
+    const parentX = d.source.x;
+    const parentY = d.source.y;
+    const childX = d.target.x;
+    const childY = d.target.y;
+  
+    const midY = (parentY + childY) / 2; // Intermediate join point
+  
+    return `
+      M${parentX},${parentY}
+      V${midY}
+      H${childX}
+      V${childY}
+    `;
+  }
+  
+  
   
   private onNodeClick(node: TreeNode): void {
     console.log('Node clicked:', node);
@@ -142,13 +192,14 @@ export class FeatureComponent {
   
     this.button.append('circle')
       .attr('r', 15)
-      .style('fill', 'green')
+      .style('fill', 'white')
+      .style('stroke', 'black')
       .style('cursor', 'pointer');
   
     this.button.append('text')
       .attr('x', -5)
       .attr('y', 5)
-      .style('fill', 'white')
+      .style('fill', 'black')
       .text('+');
   }
 
