@@ -1,1 +1,1 @@
-export * from './lib/feature-shell/feature-shell.component';
+export { routes } from './lib/landing-feature-shell/landing-feature-shell.routes';

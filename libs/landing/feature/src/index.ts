@@ -1,1 +1,1 @@
-export * from './lib/feature/feature.component';
+export { routes } from './lib/landing-feature.routes';

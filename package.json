@@ -68,7 +68,6 @@
     "autoprefixer": "^10.4.20",
     "axios": "^1.6.0",
     "d3": "^7.9.0",
-    "postcss": "^8.5.2",
     "primeicons": "^7.0.0",
     "primeng": "^19.0.6",
     "reflect-metadata": "^0.1.13",

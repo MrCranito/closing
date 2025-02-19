@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeatureShellComponent } from './feature-shell.component';
+import { LoginComponent } from './login.component';
 
-describe('FeatureShellComponent', () => {
-  let component: FeatureShellComponent;
-  let fixture: ComponentFixture<FeatureShellComponent>;
+describe('LoginComponent', () => {
+  let component: LoginComponent;
+  let fixture: ComponentFixture<LoginComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FeatureShellComponent],
+      imports: [LoginComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(FeatureShellComponent);
+    fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

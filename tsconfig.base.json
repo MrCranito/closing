@@ -15,6 +15,15 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@closing/authentification/data-access": [
+        "libs/authentification/data-access/src/index.ts"
+      ],
+      "@closing/authentification/feature": [
+        "libs/authentification/feature/src/index.ts"
+      ],
+      "@closing/authentification/feature-shell": [
+        "libs/authentification/feature-shell/src/index.ts"
+      ],
       "@closing/dashboard/data-access": [
         "libs/dashboard/data-access/src/index.ts"
       ],
@@ -22,9 +31,6 @@
       "@closing/dashboard/feature-shell": [
         "libs/dashboard/feature-shell/src/index.ts"
       ],
-      "@closing/tree-edit/data-access": ["libs/tree-edit/data-access/src/index.ts"],
-      "@closing/tree-edit/feature": ["libs/tree-edit/feature/src/index.ts"],
-      "@closing/tree-edit/feature-shell": ["libs/tree-edit/feature-shell/src/index.ts"],
       "@closing/landing/feature": ["libs/landing/feature/src/index.ts"],
       "@closing/landing/feature-shell": [
         "libs/landing/feature-shell/src/index.ts"
@@ -32,7 +38,14 @@
       "@closing/shared/data-access": ["libs/shared/data-access/src/index.ts"],
       "@closing/shared/interfaces": ["libs/shared/interfaces/src/index.ts"],
       "@closing/shared/ui-feature": ["libs/shared/ui-feature/src/index.ts"],
-      "@closing/shared/utils": ["libs/shared/utils/src/index.ts"]
+      "@closing/shared/utils": ["libs/shared/utils/src/index.ts"],
+      "@closing/tree-edit/data-access": [
+        "libs/tree-edit/data-access/src/index.ts"
+      ],
+      "@closing/tree-edit/feature": ["libs/tree-edit/feature/src/index.ts"],
+      "@closing/tree-edit/feature-shell": [
+        "libs/tree-edit/feature-shell/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]
