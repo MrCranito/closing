@@ -186,10 +186,23 @@ export class FeatureComponent {
     `;
   }
 
-  private onNodeClick(node: TreeNode): void {
-    console.log('Node clicked:', node);
-    this.highlightedNode = node; // Set the clicked node as highlighted
-    this.renderTree(); // Re-render the tree to apply highlight and button
+  private onNodeClick(selectedNode: TreeNode): void {
+    // Remove highlight from all nodes (reset to white)
+    this.container.selectAll('.node rect').style('fill', 'white');
+
+    // Find and highlight the selected node
+    this.container
+      .selectAll('.node')
+      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode)
+      .select('rect')
+      .style('fill', 'green'); // Apply green color
+
+    // Store the highlighted node
+    this.highlightedNode = selectedNode;
+
+    // Optionally recreate plus/delete buttons
+    this.createPlusButton(this.highlightedNode);
+    this.createDeleteButton(this.highlightedNode);
   }
 
   private createPlusButton(node: TreeNode): void {
