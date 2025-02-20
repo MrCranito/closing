@@ -1,4 +1,4 @@
 export const NavigationRoutes = {
-    Login: 'login',
-    Register: 'register',
+  Login: '',
+  Register: 'register',
 };

@@ -1,1 +1,1 @@
-export * from './lib/ui-feature/ui-feature.component';
+export { NavBarComponent } from './lib/nav-bar/nav-bar.component';

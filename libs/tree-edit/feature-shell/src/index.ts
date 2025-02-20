@@ -1,1 +1,1 @@
-export * from './lib/feature-shell/feature-shell.component';
+export { routes } from './lib/tree-edit-feature-shell/tree-edit-feature-shell.routes';
