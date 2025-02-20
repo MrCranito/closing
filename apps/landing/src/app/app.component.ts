@@ -1,13 +1,17 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NavBarComponent, SideNavComponent } from '@closing/shared/ui-feature';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
-  imports: [RouterModule, NavBarComponent, SideNavComponent],
+  imports: [RouterModule, ButtonModule],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
-  title = 'frontend';
+  title = 'landing';
+
+  goToApp(): void {
+    window.location.href = 'http://localhost:4300';
+  }
 }

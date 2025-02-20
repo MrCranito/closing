@@ -3,11 +3,6 @@ import { AppNavigationRoutes } from './navigation.routes';
 
 export const appRoutes: Route[] = [
   {
-    path: AppNavigationRoutes.Landing,
-    loadChildren: () =>
-      import('@closing/landing/feature-shell').then((m) => m.routes),
-  },
-  {
     path: AppNavigationRoutes.Authentification,
     loadChildren: () =>
       import('@closing/authentification/feature-shell').then((m) => m.routes),

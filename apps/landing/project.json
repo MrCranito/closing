@@ -1,29 +1,29 @@
 {
-  "name": "frontend",
+  "name": "landing",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "app",
-  "sourceRoot": "apps/frontend/src",
+  "sourceRoot": "apps/landing/src",
   "tags": [],
   "targets": {
     "build": {
       "executor": "@angular-devkit/build-angular:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/frontend",
-        "index": "apps/frontend/src/index.html",
-        "browser": "apps/frontend/src/main.ts",
+        "outputPath": "dist/apps/landing",
+        "index": "apps/landing/src/index.html",
+        "browser": "apps/landing/src/main.ts",
         "polyfills": ["zone.js"],
-        "tsConfig": "apps/frontend/tsconfig.app.json",
+        "tsConfig": "apps/landing/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/frontend/public"
+            "input": "apps/landing/public"
           }
         ],
         "styles": [
-          "apps/frontend/src/styles.scss",
+          "apps/landing/src/styles.scss",
           "node_modules/primeicons/primeicons.css"
         ],
         "scripts": []
@@ -56,21 +56,21 @@
       "executor": "@angular-devkit/build-angular:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "frontend:build:production"
+          "buildTarget": "landing:build:production"
         },
         "development": {
-          "buildTarget": "frontend:build:development"
+          "buildTarget": "landing:build:development"
         }
       },
       "options": {
-        "port": 4300
+        "port": 4200
       },
       "defaultConfiguration": "development"
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "buildTarget": "frontend:build"
+        "buildTarget": "landing:build"
       }
     },
     "lint": {
@@ -80,14 +80,14 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/frontend/jest.config.ts"
+        "jestConfig": "apps/landing/jest.config.ts"
       }
     },
     "serve-static": {
       "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "frontend:build",
-        "staticFilePath": "dist/apps/frontend/browser",
+        "buildTarget": "landing:build",
+        "staticFilePath": "dist/apps/landing/browser",
         "spa": true
       }
     }

@@ -195,7 +195,7 @@ export class FeatureComponent {
       .selectAll('.node')
       .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode)
       .select('rect')
-      .style('fill', 'green'); // Apply green color
+      .style('fill', '#34d399'); // Apply green color
 
     // Store the highlighted node
     this.highlightedNode = selectedNode;
@@ -265,7 +265,7 @@ export class FeatureComponent {
       .attr('x', -5)
       .attr('y', 5)
       .style('fill', 'white')
-      .text('🗑️');
+      .text('-');
   }
 
   addNode(parentId: string): void {
