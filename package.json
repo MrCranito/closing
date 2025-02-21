@@ -65,6 +65,8 @@
     "@nestjs/common": "^10.0.2",
     "@nestjs/core": "^10.0.2",
     "@nestjs/platform-express": "^10.0.2",
+    "@ngrx/operators": "^19.0.1",
+    "@ngrx/signals": "^19.0.1",
     "@primeng/themes": "^19.0.6",
     "autoprefixer": "^10.4.20",
     "axios": "^1.6.0",

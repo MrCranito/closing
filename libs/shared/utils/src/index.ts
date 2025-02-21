@@ -1,1 +1,1 @@
-export * from './lib/utils/utils.component';
+export { AuthGuard } from './lib/guards/auth.guard';

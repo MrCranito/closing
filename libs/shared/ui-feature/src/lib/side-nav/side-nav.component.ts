@@ -7,7 +7,6 @@ import { Router, RouterModule } from '@angular/router';
   selector: 'lib-shared-side-nav',
   imports: [CommonModule, ButtonModule, RouterModule],
   templateUrl: './side-nav.component.html',
-  styleUrl: './side-nav.component.css',
   host: {
     class: 'h-full w-64',
   },

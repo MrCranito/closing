@@ -1,6 +1,5 @@
-export enum AppNavigationRoutes { 
-    Landing = '',
-    Dashboard = 'dashboard',
-    TreeEdit = 'tree-edit',
-    Authentification = 'auth',
+export enum AppNavigationRoutes {
+  Dashboard = '',
+  TreeEdit = 'tree-edit',
+  Authentification = 'auth',
 }
