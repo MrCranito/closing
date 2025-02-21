@@ -4,11 +4,13 @@ import { appRoutes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
-import { AuthStore } from '@closing/shared/data-access';
+import { AuthStore, environment } from '@closing/shared/data-access';
 import { provideHttpClient } from '@angular/common/http';
+import { ENVIRONMENT } from '@closing/shared/interfaces';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: ENVIRONMENT, useValue: environment },
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes),
     provideAnimationsAsync(),
