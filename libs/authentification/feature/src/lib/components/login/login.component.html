@@ -228,8 +228,10 @@
         Join to Our Community with all time access and free
       </h1>
       <div class="mt-4 flex flex-col lg:flex-row items-center justify-between">
-        <div class="w-full lg:w-1/2 mb-2 lg:mb-0">
-          <p-button
+        <div class="w-full mb-2 lg:mb-0">
+          <button
+            pButton
+            outlined
             (click)="onGoogleRegister()"
             label="Sign Up with Google"
             class="w-full max-w-md p-button-secondary"
@@ -257,18 +259,25 @@
                 d="m419.404 58.936-82.933 67.896C313.136 112.246 285.552 103.82 256 103.82c-66.729 0-123.429 42.957-143.965 102.724l-83.397-68.276h-.014C71.23 56.123 157.06 0 256 0c62.115 0 119.068 22.126 163.404 58.936z"
               ></path>
             </svg>
-          </p-button>
+          </button>
         </div>
       </div>
       <div class="mt-4 text-sm text-gray-600 text-center">
         <p>or with email</p>
       </div>
-      <form action="#" method="POST" class="space-y-4">
+      <form
+        [formGroup]="loginFormSignal()"
+        (ngSubmit)="submit()"
+        class="space-y-4"
+      >
         <div class="w-full">
           <label for="email" class="block font-medium mb-1">Email</label>
-          <p-inputText
+          <input
+            type="text"
+            pInputText
             id="email"
             type="email"
+            placeholder="dupont@gmail.com"
             formControlName="email"
             class="w-full p-inputtext"
             [ngClass]="{ 'p-invalid': emailErrors() }"
@@ -279,8 +288,11 @@
         </div>
         <div class="w-full">
           <label for="password" class="block font-medium mb-1">Password</label>
-          <p-password
+          <input
+            type="text"
+            pInputText
             id="password"
+            placeholder="********"
             formControlName="password"
             class="w-full"
             [ngClass]="{ 'p-invalid': passwordErrors() }"
@@ -290,32 +302,36 @@
             {{ 'Password is required' }}
           </small>
         </div>
-        <div>
-          <p-button
+        <div class="w-full">
+          <button
             type="submit"
+            pButton
             label="Register"
             class="w-full p-button-primary"
             [disabled]="!isFormValid()"
-          ></p-button>
+          ></button>
         </div>
       </form>
       <div class="mt-4 text-sm text-gray-600 text-center">
         <p>
           No account?
-          <a (click)="goToRegister()" class="text-black hover:underline"
+          <a
+            (click)="goToRegister()"
+            class="cursor-pointer text-black hover:underline"
             >Register here</a
           >
         </p>
       </div>
       <div class="mt-4 text-sm text-gray-600 text-center">
         <p>
-          Forgot Password?
-          <a (click)="goToForgotPassword()" class="text-black hover:underline"
-            >Register here</a
+          <a
+            (click)="goToForgotPassword()"
+            class="cursor-pointer text-black hover:underline"
           >
+            Forgot Password?
+          </a>
         </p>
       </div>
     </div>
   </div>
 </div>
-s

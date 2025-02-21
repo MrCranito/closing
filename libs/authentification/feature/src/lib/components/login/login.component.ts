@@ -7,13 +7,21 @@ import {
   FormGroup,
   Validators,
   AbstractControl,
+  FormsModule,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthStore } from '@closing/shared/data-access';
 
 @Component({
   selector: 'lib-authentification-login',
-  imports: [CommonModule, InputTextModule, ButtonModule],
+  imports: [
+    CommonModule,
+    InputTextModule,
+    ButtonModule,
+    FormsModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
@@ -23,7 +31,7 @@ export class LoginComponent {
   private formBuilder = inject(FormBuilder);
 
   // Form state using Signals
-  private registerFormSignal = signal<FormGroup>(
+  protected loginFormSignal = signal<FormGroup>(
     this.formBuilder.group({
       email: ['', [Validators.required]],
       password: ['', [Validators.required]],
@@ -31,7 +39,7 @@ export class LoginComponent {
   );
 
   // Computed signals for form and controls
-  readonly form = computed(() => this.registerFormSignal());
+  readonly form = computed(() => this.loginFormSignal());
   readonly name = computed(() => this.form().get('name') as AbstractControl);
   readonly email = computed(() => this.form().get('email') as AbstractControl);
   readonly password = computed(
@@ -45,7 +53,7 @@ export class LoginComponent {
   readonly isFormValid = computed(() => this.form().valid);
 
   // Register using traditional email/password
-  async onLogin() {
+  async submit() {
     if (this.isFormValid()) {
       const { name, email, password } = this.form().value;
       await this.authStore.register(email, password);

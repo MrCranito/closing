@@ -5,6 +5,8 @@ import {
   AbstractControl,
   FormBuilder,
   FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -13,7 +15,13 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'lib-authentification-register',
-  imports: [CommonModule, ButtonModule, InputTextModule],
+  imports: [
+    CommonModule,
+    ButtonModule,
+    InputTextModule,
+    FormsModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
 })
@@ -23,7 +31,7 @@ export class RegisterComponent {
   private formBuilder = inject(FormBuilder);
 
   // Form state using Signals
-  private registerFormSignal = signal<FormGroup>(
+  protected registerFormSignal = signal<FormGroup>(
     this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       password: [
@@ -51,7 +59,7 @@ export class RegisterComponent {
   readonly passwordErrors = computed(() => this.password()?.errors);
   readonly isFormValid = computed(() => this.form().valid);
   // Register using traditional email/password
-  async onRegister() {
+  async submit() {
     if (this.isFormValid()) {
       const { name, email, password } = this.form().value;
       await this.authStore.register(email, password);

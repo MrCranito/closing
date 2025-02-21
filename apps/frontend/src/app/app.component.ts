@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NavBarComponent, SideNavComponent } from '@closing/shared/ui-feature';
 
 @Component({
-  imports: [RouterModule, NavBarComponent, SideNavComponent],
+  imports: [RouterModule],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
