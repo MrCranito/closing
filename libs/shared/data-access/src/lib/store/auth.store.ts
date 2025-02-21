@@ -33,7 +33,6 @@ export const AuthStore = signalStore(
               next: (user) => patchState(store, { user, isLoading: false }),
               error: (err) => {
                 patchState(store, { isLoading: false });
-                console.error(err);
               },
             })
           );
@@ -49,7 +48,6 @@ export const AuthStore = signalStore(
               next: (user) => patchState(store, { user, isLoading: false }),
               error: (err) => {
                 patchState(store, { isLoading: false });
-                console.error(err);
               },
             })
           );
@@ -65,7 +63,6 @@ export const AuthStore = signalStore(
               next: (user) => patchState(store, { user, isLoading: false }),
               error: (err) => {
                 patchState(store, { isLoading: false });
-                console.error(err);
               },
             })
           );
