@@ -8,6 +8,19 @@ import { AuthStore, environment } from '@closing/shared/data-access';
 import { provideHttpClient } from '@angular/common/http';
 import { ENVIRONMENT } from '@closing/shared/interfaces';
 
+// Detect system theme
+const prefersDarkMode = window.matchMedia(
+  '(prefers-color-scheme: dark)'
+).matches;
+const theme = prefersDarkMode ? LaraDarkBlue : Aura;
+
+// Apply Tailwind dark mode
+if (prefersDarkMode) {
+  document.documentElement.classList.add('dark');
+} else {
+  document.documentElement.classList.remove('dark');
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     { provide: ENVIRONMENT, useValue: environment },
