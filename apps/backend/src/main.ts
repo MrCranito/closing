@@ -5,16 +5,27 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
+
 import { AppModule } from './app/app.module';
+import { IAppConfig } from './app/config/app.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
+
+  const configService = app.get(ConfigService);
+
+  const appConfig = configService.get<IAppConfig>('app');
+
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 8080;
-  await app.listen(port);
+
+  await app.startAllMicroservices();
+
+  await app.listen(appConfig.port);
+
   Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`
+    `🚀 Closing Backend Application is running on (${appConfig.version})listening on port : ${appConfig.port}`
   );
 }
 

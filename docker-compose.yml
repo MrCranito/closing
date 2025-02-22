@@ -1,0 +1,42 @@
+services:
+  api_closing:
+    container_name: api_closing
+    image: api_closing:local
+    build: .
+    environment:
+      - POSTGRES_HOST=api_closing_pg
+      - POSTGRES_DATABASE_NAME=api_closing_pg
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_USERNAME=example
+      - POSTGRES_PORT=5432
+    ports:
+      - 8080:8080
+    volumes:
+      - .:/var/www
+      - /var/www/node_modules
+    depends_on:
+      - api_closing_pg
+    networks:
+      - my-network
+    command: /bin/sh
+    stdin_open: true
+    tty: true
+
+  api_closing_pg:
+    container_name: api_closing_pg
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=closing
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    command: -p 5432
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
