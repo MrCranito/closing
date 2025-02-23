@@ -221,19 +221,15 @@
   <!-- Right Pane -->
   <div class="w-full bg-gray-100 lg:w-1/2 flex items-center justify-center">
     <div class="max-w-md w-full p-6">
-      <h1 class="text-3xl font-semibold mb-6 text-black text-center">
-        Sign Up
-      </h1>
-      <h1 class="text-sm font-semibold mb-6 text-gray-500 text-center">
-        Join to Our Community with all time access and free
-      </h1>
+      <h1 class="text-3xl font-semibold mb-6 text-black text-center">Log In</h1>
+
       <div class="mt-4 flex flex-col lg:flex-row items-center justify-between">
         <div class="w-full mb-2 lg:mb-0">
           <button
             pButton
             outlined
             (click)="onGoogleRegister()"
-            label="Sign Up with Google"
+            label="Log In with Google"
             class="w-full max-w-md p-button-secondary"
           >
             <svg
@@ -310,7 +306,7 @@
           <button
             type="submit"
             pButton
-            label="Register"
+            label="Login"
             class="w-full p-button-primary"
             [disabled]="!isFormValid()"
           ></button>
