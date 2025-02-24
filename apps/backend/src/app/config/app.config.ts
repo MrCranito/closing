@@ -6,8 +6,8 @@ export interface IAppConfig {
 }
 
 const config: IAppConfig = {
-  name: process.env.npm_package_name,
-  version: process.env.npm_package_version,
+  name: 'Closing Api',
+  version: '1.0.0',
   port: parseInt(process.env.API_PORT) || 8080,
   uptime: process.uptime,
 };

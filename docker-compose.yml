@@ -5,13 +5,13 @@ services:
     build: .
     environment:
       - NODE_ENV=development
+      - POSTGRES_HOST=api_closing_pg
+      - POSTGRES_PORT=5432
+      - POSTGRES_DATABASE_NAME=postgres
+      - POSTGRES_USERNAME=admin
+      - POSTGRES_PASSWORD=admin
       - JWT_SECRET=example
       - JWT_SECRET_EXPIRES_IN=50d
-      - POSTGRES_HOST=api_closing_pg
-      - POSTGRES_DATABASE_NAME=api_closing_pg
-      - POSTGRES_PASSWORD=example
-      - POSTGRES_USERNAME=example
-      - POSTGRES_PORT=5432
       - API_PORT=8080
     ports:
       - 8080:8080
@@ -30,7 +30,7 @@ services:
     container_name: api_closing_pg
     image: postgres:latest
     environment:
-      - POSTGRES_DB=closing
+      - POSTGRES_DB=postgres
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
     expose:

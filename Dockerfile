@@ -8,11 +8,13 @@ RUN apk --no-cache add bash curl git openssh build-base python3
 WORKDIR /var/www
 
 COPY package*.json ./
+RUN npm install
+
 RUN npm ci
 COPY . ./
 
-RUN npx nx run backend:build
+RUN npm run build
 
 EXPOSE 8080
 
-CMD npm start
+CMD npm 

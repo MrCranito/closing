@@ -11,22 +11,27 @@ import { AppModule } from './app/app.module';
 import { IAppConfig } from './app/config/app.config';
 
 async function bootstrap() {
+  console.log('🚀 Starting NestJS application...');
+
   const app = await NestFactory.create(AppModule, { cors: true });
+  console.log('✅ NestJS instance created.');
 
   const configService = app.get(ConfigService);
+  console.log('✅ ConfigService retrieved.');
 
   const appConfig = configService.get<IAppConfig>('app');
+  console.log(`✅ Retrieved app config: ${JSON.stringify(appConfig)}`);
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
+  console.log(`✅ Global prefix set: ${globalPrefix}`);
 
   await app.startAllMicroservices();
+  console.log('✅ Microservices started.');
 
-  await app.listen(appConfig.port);
-
-  Logger.log(
-    `🚀 Closing Backend Application is running on (${appConfig.version})listening on port : ${appConfig.port}`
-  );
+  await app.listen(appConfig.port || 8080, '0.0.0.0');
+  console.log(`✅ Listening on port: ${appConfig.port || 8080}`);
 }
+bootstrap();
 
 bootstrap();

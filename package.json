@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve backend",
-    "build": "nx build",
+    "build": "nx build backend",
     "test": "nx test",
     "lint": "nx lint"
   },
@@ -80,7 +80,7 @@
     "angular-oauth2-oidc": "^19.0.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.6.0",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "d3": "^7.9.0",
