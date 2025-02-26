@@ -34,13 +34,6 @@ export const routes: Route[] = [
       ),
   },
   {
-    path: NavigationRoutes.VerifyingAccount,
-    loadComponent: () =>
-      import('./veryfying-account/veryfying-account.component').then(
-        (m) => m.VeryfyingAccountComponent
-      ),
-  },
-  {
     path: '**',
     redirectTo: NavigationRoutes.Login,
   },

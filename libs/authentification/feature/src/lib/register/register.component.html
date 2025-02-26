@@ -265,13 +265,11 @@
       <div class="mt-4 text-sm text-gray-600 text-center">
         <p>or with email</p>
       </div>
-      <form
-        [formGroup]="registerFormSignal()"
-        (ngSubmit)="submit()"
-        class="space-y-4"
-      >
+      <form [formGroup]="registerForm" (ngSubmit)="submit()" class="space-y-4">
         <div class="w-full">
-          <label for="email" class="block font-medium mb-1">Email</label>
+          <label for="email" class="block font-medium mb-1 text-gray-600"
+            >Email</label
+          >
           <input
             pInputText
             id="email"
@@ -279,34 +277,92 @@
             placeholder="dupont@gmail.com"
             formControlName="email"
             class="w-full p-inputtext"
-            [ngClass]="{ 'p-invalid': emailErrors() }"
+            [ngClass]="{
+              'p-invalid': registerForm.controls.email.hasError('required')
+            }"
           />
-          <small *ngIf="emailErrors()" class="p-error">
-            {{ emailErrors()?.['required'] ? 'Email is required' : 'Enter a valid email' }}
+          <small
+            *ngIf="registerForm.controls.email.hasError('required')"
+            class="p-error"
+          >
+            {{ 'Email is required' }}
           </small>
         </div>
         <div class="w-full">
-          <label for="password" class="block font-medium mb-1">Password</label>
+          <label for="password" class="block font-medium mb-1 text-gray-600"
+            >Password</label
+          >
           <input
             pInputText
             id="password"
             placeholder="********"
             formControlName="password"
             class="w-full"
-            [ngClass]="{ 'p-invalid': passwordErrors() }"
+            [ngClass]="{
+              'p-invalid': registerForm.controls.password.hasError('required')
+            }"
             toggleMask
           />
-          <small *ngIf="passwordErrors()" class="p-error">
-            <ng-container *ngIf="passwordErrors()?.['required']"
+          <small *ngIf="registerForm.controls.password.errors" class="p-error">
+            <ng-container
+              *ngIf="registerForm.controls.password.hasError('required')"
               >Password is required.</ng-container
             >
-            <ng-container *ngIf="passwordErrors()?.['minlength']"
+            <ng-container
+              *ngIf="registerForm.controls.password.hasError('minlength')"
               >Password must be at least 6 characters.</ng-container
             >
-            <ng-container *ngIf="passwordErrors()?.['pattern']">
+            <ng-container
+              *ngIf="registerForm.controls.password.hasError('pattern')"
+            >
               Password must contain at least one uppercase letter and one
               special character.
             </ng-container>
+          </small>
+        </div>
+
+        <div class="w-full">
+          <label for="lastname" class="block font-medium mb-1 text-gray-600"
+            >Lastname</label
+          >
+          <input
+            pInputText
+            id="lastname"
+            placeholder="********"
+            formControlName="lastname"
+            class="w-full"
+            [ngClass]="{
+              'p-invalid': registerForm.controls.lastname.hasError('required')
+            }"
+            toggleMask
+          />
+          <small
+            *ngIf="registerForm.controls.lastname.hasError('required')"
+            class="p-error"
+          >
+            {{ 'Lastname is required' }}
+          </small>
+        </div>
+        <div class="w-full">
+          <label for="firstname" class="block font-medium mb-1 text-gray-600"
+            >Firstname</label
+          >
+          <input
+            pInputText
+            id="firstname"
+            placeholder="********"
+            formControlName="firstname"
+            class="w-full"
+            [ngClass]="{
+              'p-invalid': registerForm.controls.firstname.hasError('required')
+            }"
+            toggleMask
+          />
+          <small
+            *ngIf="registerForm.controls.firstname.hasError('required')"
+            class="p-error"
+          >
+            {{ 'Fistname is required' }}
           </small>
         </div>
         <div>

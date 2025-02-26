@@ -16,7 +16,6 @@ import {
 } from '@closing/shared/data-access';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ENVIRONMENT } from '@closing/shared/interfaces';
-import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { MessageService } from 'primeng/api';
 import { AuthInitService, AuthInterceptor } from '@closing/shared/utils';
 
@@ -26,7 +25,6 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => inject(AuthInitService).initAuth()),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes),
-    provideOAuthClient(),
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {

@@ -61,7 +61,12 @@ export const AuthStore = signalStore(
           })
         )
       ),
-      register: rxMethod<{ email: string; password: string }>(
+      register: rxMethod<{
+        email: string;
+        password: string;
+        lastname: string;
+        firstname: string;
+      }>(
         pipe(
           tap(() => patchState(store, { loading: true })),
           switchMap((parameters) => {

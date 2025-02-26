@@ -1,4 +1,4 @@
-<div class="flex h-screen">
+<div class="dark flex h-screen">
   <!-- Left Pane -->
   <div
     class="hidden lg:flex items-center justify-center flex-1 bg-white text-black"
@@ -276,7 +276,7 @@
             id="email"
             placeholder="dupont@gmail.com"
             formControlName="email"
-            class="w-full p-inputtext"
+            class="w-full"
             [ngClass]="{
               'p-invalid': loginFormSignal.controls.email.hasError('required')
             }"

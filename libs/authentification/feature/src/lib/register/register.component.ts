@@ -30,41 +30,37 @@ export class RegisterComponent {
   private authStore = inject(AuthStore);
   private formBuilder = inject(FormBuilder);
 
-  // Form state using Signals
-  protected registerFormSignal = signal<FormGroup>(
-    this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(6),
-          Validators.pattern(/^(?=.*[A-Z])(?=.*[\W_]).{6,}$/), // At least 1 uppercase & 1 special character
-        ],
+  protected registerForm = this.formBuilder.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(6),
+        Validators.pattern(/^(?=.*[A-Z])(?=.*[\W_]).{6,}$/),
       ],
-    })
-  );
+    ],
+    lastname: ['', [Validators.required, Validators.minLength(1)]],
+    firstname: ['', [Validators.required, Validators.minLength(1)]],
+    companyName: ['', [Validators.required, Validators.minLength(1)]],
+  });
 
-  // Computed signals for form and controls
-  readonly form = computed(() => this.registerFormSignal());
-  readonly name = computed(() => this.form().get('name') as AbstractControl);
-  readonly email = computed(() => this.form().get('email') as AbstractControl);
-  readonly password = computed(
-    () => this.form().get('password') as AbstractControl
-  );
+  readonly email = computed(() => this.registerForm.controls.email);
+  readonly password = computed(() => this.registerForm.controls.password);
+  readonly lastname = computed(() => this.registerForm.controls.lastname);
+  readonly firstname = computed(() => this.registerForm.controls.firstname);
+  readonly isFormValid = computed(() => this.registerForm.valid);
 
-  // Computed signals for validation errors
-  readonly nameErrors = computed(() => this.name()?.errors);
-  readonly emailErrors = computed(() => this.email()?.errors);
-  readonly passwordErrors = computed(() => this.password()?.errors);
-  readonly isFormValid = computed(() => this.form().valid);
-  // Register using traditional email/password
   async submit() {
     if (this.isFormValid()) {
-      const { name, email, password } = this.form().value;
-      await this.authStore.register(email, password);
+      await this.authStore.register({
+        email: this.registerForm.controls.email.value ?? '',
+        password: this.registerForm.controls.password.value ?? '',
+        lastname: this.registerForm.controls.lastname.value ?? '',
+        firstname: this.registerForm.controls.firstname.value ?? '',
+      });
     } else {
-      this.form().markAllAsTouched();
+      this.registerForm.markAllAsTouched();
     }
   }
 

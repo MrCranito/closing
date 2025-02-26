@@ -75,7 +75,6 @@
     "@ngrx/operators": "^19.0.1",
     "@ngrx/signals": "^19.0.1",
     "@primeng/themes": "^19.0.6",
-    "angular-oauth2-oidc": "^19.0.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.6.0",
     "bcryptjs": "^3.0.2",

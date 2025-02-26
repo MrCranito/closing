@@ -3,6 +3,5 @@ export const NavigationRoutes = {
   Register: 'register',
   ForgotPassword: 'forgot-password',
   NotVerifiedAccount: 'not-verified-account',
-  VerifyingAccount: 'verifiying-account/:id',
   ResetPassword: 'reset-password/:id',
 };
