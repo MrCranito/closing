@@ -31,6 +31,8 @@
       "@closing/dashboard/feature-shell": [
         "libs/dashboard/feature-shell/src/index.ts"
       ],
+      "@closing/layout/feature": ["libs/layout/feature/src/index.ts"],
+      "@closing/layout/feature-shell": ["libs/layout/feature-shell/src/index.ts"],
       "@closing/shared/data-access": ["libs/shared/data-access/src/index.ts"],
       "@closing/shared/interfaces": ["libs/shared/interfaces/src/index.ts"],
       "@closing/shared/ui-feature": ["libs/shared/ui-feature/src/index.ts"],

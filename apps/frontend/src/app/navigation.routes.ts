@@ -1,5 +1,4 @@
 export enum AppNavigationRoutes {
-  Dashboard = '',
-  TreeEdit = 'tree-edit',
+  MainLayout = '',
   Authentification = 'auth',
 }

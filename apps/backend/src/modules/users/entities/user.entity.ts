@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -12,16 +12,24 @@ export class User {
   @IsEmail()
   public email: string;
 
-  @Column()
-  @IsNotEmpty({})
-  public firstname: string;
+  @Column({ nullable: true })
+  @IsBoolean()
+  public isEmailVerified: boolean;
 
-  @Column()
-  @IsNotEmpty({})
-  public lastname: string;
+  @Column({ nullable: true })
+  @IsString()
+  public firstname: string | null;
+
+  @Column({ nullable: true })
+  @IsString()
+  public lastname: string | null;
+
+  @Column({ nullable: true })
+  @IsString()
+  public phone: string | null;
 
   @Column()
   @Exclude()
-  @IsNotEmpty({})
+  @IsNotEmpty()
   public password: string;
 }

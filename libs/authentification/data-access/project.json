@@ -1,5 +1,5 @@
 {
-  "name": "data-access",
+  "name": "authentification-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/authentification/data-access/src",
   "prefix": "lib",

@@ -11,16 +11,9 @@ export const appRoutes: Route[] = [
     providers: [AuthStore],
   },
   {
-    path: AppNavigationRoutes.Dashboard,
+    path: AppNavigationRoutes.MainLayout,
     loadChildren: () =>
-      import('@closing/dashboard/feature-shell').then((m) => m.routes),
-    canActivate: [AuthGuard],
-    providers: [AuthStore],
-  },
-  {
-    path: AppNavigationRoutes.TreeEdit,
-    loadChildren: () =>
-      import('@closing/tree/feature-shell').then((m) => m.routes),
+      import('@closing/layout/feature-shell').then((m) => m.routes),
     canActivate: [AuthGuard],
     providers: [AuthStore],
   },

@@ -1,13 +1,10 @@
-import { Company } from '../company/company.interface';
-
 export interface User {
   id: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  company: Company;
+  firstname: string;
+  lastname: string;
+  isEmailVerified: boolean;
 }
 
 export enum UserRole {

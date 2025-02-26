@@ -33,5 +33,3 @@ async function bootstrap() {
   console.log(`✅ Listening on port: ${appConfig.port || 8080}`);
 }
 bootstrap();
-
-bootstrap();

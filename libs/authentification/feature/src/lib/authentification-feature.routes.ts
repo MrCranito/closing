@@ -5,15 +5,39 @@ export const routes: Route[] = [
   {
     path: NavigationRoutes.Login,
     loadComponent: () =>
-      import('./components/login/login.component').then(
-        (m) => m.LoginComponent
-      ),
+      import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
     path: NavigationRoutes.Register,
     loadComponent: () =>
-      import('./components/register/register.component').then(
-        (m) => m.RegisterComponent
+      import('./register/register.component').then((m) => m.RegisterComponent),
+  },
+  {
+    path: NavigationRoutes.ForgotPassword,
+    loadComponent: () =>
+      import('./forgot-password/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent
+      ),
+  },
+  {
+    path: NavigationRoutes.ResetPassword,
+    loadComponent: () =>
+      import('./reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent
+      ),
+  },
+  {
+    path: NavigationRoutes.NotVerifiedAccount,
+    loadComponent: () =>
+      import('./not-verified-account/not-verified-account.component').then(
+        (m) => m.NotVerifiedComponent
+      ),
+  },
+  {
+    path: NavigationRoutes.VerifyingAccount,
+    loadComponent: () =>
+      import('./veryfying-account/veryfying-account.component').then(
+        (m) => m.VeryfyingAccountComponent
       ),
   },
   {

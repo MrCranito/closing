@@ -3,27 +3,38 @@ import {
   HttpRequest,
   HttpHandler,
   HttpEvent,
+  HttpHandlerFn,
+  HttpErrorResponse,
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthStore } from '@closing/shared/data-access';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 
-@Injectable()
-export class AuthInterceptor implements HttpInterceptor {
-  private authStore = inject(AuthStore);
+export function AuthInterceptor(
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn
+): Observable<HttpEvent<unknown>> {
+  const authStore = inject(AuthStore);
+  const router = inject(Router);
+  const authToken = authStore.getToken();
+  let clonedRequest = req;
 
-  intercept(
-    req: HttpRequest<any>,
-    next: HttpHandler
-  ): Observable<HttpEvent<any>> {
-    const token = this.authStore.getToken();
-
-    if (token) {
-      req = req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` },
-      });
-    }
-
-    return next.handle(req);
+  if (authToken) {
+    clonedRequest = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
   }
+
+  return next(clonedRequest).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        authStore.logOut();
+        router.navigate(['/auth/login']);
+      }
+      return throwError(error);
+    })
+  );
 }

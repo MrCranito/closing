@@ -1,5 +1,5 @@
 {
-  "name": "feature-shell",
+  "name": "authentification-feature-shell",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/authentification/feature-shell/src",
   "prefix": "lib",

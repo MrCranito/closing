@@ -10,15 +10,14 @@ export class AuthGuard implements CanActivate {
   private authStore = inject(AuthStore);
   private router = inject(Router);
 
-  canActivate(): boolean {
-    console.log('AuthGuard#canActivate called');
-    console.log(
-      'this.authStore.isAuthenticated()',
-      this.authStore.isAuthenticated()
-    );
+  async canActivate(): Promise<boolean> {
     if (!this.authStore.isAuthenticated()) {
       this.router.navigate(['/auth']);
       return false;
+    }
+
+    if (!this.authStore.user()?.isEmailVerified) {
+      this.router.navigate(['/auth/not-verified-account']);
     }
     return true;
   }

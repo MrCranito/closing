@@ -262,7 +262,7 @@
         <p>or with email</p>
       </div>
       <form
-        [formGroup]="loginFormSignal()"
+        [formGroup]="loginFormSignal"
         (ngSubmit)="submit()"
         class="space-y-4"
       >
@@ -274,13 +274,17 @@
             type="text"
             pInputText
             id="email"
-            type="email"
             placeholder="dupont@gmail.com"
             formControlName="email"
             class="w-full p-inputtext"
-            [ngClass]="{ 'p-invalid': emailErrors() }"
+            [ngClass]="{
+              'p-invalid': loginFormSignal.controls.email.hasError('required')
+            }"
           />
-          <small *ngIf="emailErrors()" class="p-error">
+          <small
+            *ngIf="loginFormSignal.controls.email.hasError('required')"
+            class="p-error"
+          >
             {{ 'Email is required' }}
           </small>
         </div>
@@ -295,10 +299,16 @@
             placeholder="********"
             formControlName="password"
             class="w-full"
-            [ngClass]="{ 'p-invalid': passwordErrors() }"
+            [ngClass]="{
+              'p-invalid':
+                loginFormSignal.controls.password.hasError('required')
+            }"
             toggleMask
           />
-          <small *ngIf="passwordErrors()" class="p-error">
+          <small
+            *ngIf="loginFormSignal.controls.email.hasError('required')"
+            class="p-error"
+          >
             {{ 'Password is required' }}
           </small>
         </div>
@@ -306,9 +316,11 @@
           <button
             type="submit"
             pButton
-            label="Login"
+            [label]="!loading() ? 'Login' : ''"
             class="w-full p-button-primary"
-            [disabled]="!isFormValid()"
+            [disabled]="!loginFormSignal.valid"
+            [loading]="loading() ?? false"
+            loadingIcon="pi pi-spin pi-sync"
           ></button>
         </div>
       </form>

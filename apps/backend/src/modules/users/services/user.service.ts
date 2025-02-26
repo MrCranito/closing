@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
 import { DeleteResult, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from '../dto/user.dto';
@@ -34,15 +35,7 @@ export class UsersService {
   }
 
   async findOne(query: any): Promise<User> {
-    return this.repository.findOneByOrFail(query).catch(() => {
-      throw new HttpException(
-        {
-          status: HttpStatus.NOT_FOUND,
-          error: 'User does not exist',
-        },
-        HttpStatus.NOT_FOUND
-      );
-    });
+    return this.repository.findOne(query);
   }
 
   async deleteOne(id: number): Promise<DeleteResult> {
@@ -65,6 +58,7 @@ export class UsersService {
           );
         }
       });
+    user.password = await bcrypt.hash(body.password, 10);
 
     return this.repository.save(user);
   }

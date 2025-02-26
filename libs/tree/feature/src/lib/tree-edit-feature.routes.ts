@@ -2,7 +2,7 @@ import { Route } from '@angular/router';
 
 export const routes: Route[] = [
   {
-    path: 'create',
+    path: '',
     loadComponent: () =>
       import('./tree-create/tree-create.component').then(
         (m) => m.TreeCreateComponent

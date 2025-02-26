@@ -3,7 +3,7 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 const runOptions: PostgresConnectionOptions = {
   name: 'default',
   type: 'postgres',
-  host: process.env.POSTGRES_HOST || 'localhost',
+  host: process.env.POSTGRES_HOST || 'api_closing_pg',
   port: parseInt(process.env.POSTGRES_PORT || '5432'),
   database: process.env.POSTGRES_DATABASE_NAME || 'postgres',
   username: process.env.POSTGRES_USERNAME || 'admin',
