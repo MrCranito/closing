@@ -32,7 +32,7 @@ export const AuthStore = signalStore(
       localStorageService = inject(LocalStorageService),
       notificationStore = inject(NotificationStore)
     ) => ({
-      login: rxMethod<{ email: string; password: string }>(
+      login: rxMethod<{ email: string; password: string; rememberMe: boolean }>(
         pipe(
           tap(() => patchState(store, { loading: true })),
           switchMap((parameters) => {
@@ -41,7 +41,9 @@ export const AuthStore = signalStore(
               .pipe(
                 tapResponse({
                   next: (response) => {
-                    localStorageService.setToken(response.token);
+                    if (parameters.rememberMe) {
+                      localStorageService.setToken(response.token);
+                    }
                     patchState(store, {
                       user: response.user,
                       loading: false,

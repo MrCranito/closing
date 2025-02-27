@@ -19,6 +19,7 @@ import { Router } from '@angular/router';
 import { AuthStore } from '@closing/shared/data-access';
 import { User } from '@closing/shared/interfaces';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { FloatLabelModule } from 'primeng/floatlabel';
 
 @Component({
   selector: 'lib-authentification-login',
@@ -28,6 +29,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
     ButtonModule,
     FormsModule,
     ReactiveFormsModule,
+    FloatLabelModule,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
@@ -37,13 +39,15 @@ export class LoginComponent {
   private authStore = inject(AuthStore);
   private formBuilder = inject(FormBuilder);
 
-  protected loginFormSignal = this.formBuilder.group({
-    email: ['', [Validators.required]],
+  protected loginForm = this.formBuilder.group({
+    email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
+    rememberMe: [false],
   });
 
-  protected email = computed(() => this.loginFormSignal.controls.email);
-  protected password = computed(() => this.loginFormSignal.controls.password);
+  protected email = computed(() => this.loginForm.controls.email);
+  protected password = computed(() => this.loginForm.controls.password);
+  protected rememberMe = computed(() => this.loginForm.controls.rememberMe);
 
   protected user: Signal<User | null> = this.authStore.user;
   protected loading: Signal<boolean | null> = this.authStore.loading;
@@ -58,13 +62,14 @@ export class LoginComponent {
 
   // Register using traditional email/password
   async submit() {
-    if (this.loginFormSignal.valid) {
+    if (this.loginForm.valid) {
       await this.authStore.login({
-        email: this.loginFormSignal.controls.email.value ?? '',
-        password: this.loginFormSignal.controls.password.value ?? '',
+        email: this.loginForm.controls.email.value ?? '',
+        password: this.loginForm.controls.password.value ?? '',
+        rememberMe: this.loginForm.controls.rememberMe.value ?? false,
       });
     } else {
-      this.loginFormSignal.markAllAsTouched();
+      this.loginForm.markAllAsTouched();
     }
   }
 
