@@ -5,6 +5,13 @@ import { SidebarModule } from 'primeng/sidebar';
 import * as d3 from 'd3';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
+import {
+  FormBuilder,
+  FormArray,
+  FormGroup,
+  Validators,
+  AbstractControl,
+} from '@angular/forms';
 
 type LinkData = {
   source: d3.HierarchyPointNode<TreeNode>;
@@ -24,12 +31,22 @@ export class TreeCreateComponent {
   @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
 
   sidebarVisible: boolean = false;
+  editingNode: TreeNode | null = null; // To store the node being edited
+  nodeName: string = ''; // To store the name of the node being edited
+  nodeDescription: string = ''; // To store the description of the node being edited
 
   private treeData: TreeNode = {
     id: 'root',
     name: 'Root Node',
     children: [{ id: 'secondary', name: 'child', children: [] }],
   };
+
+  private nodesForm: FormArray;
+
+  constructor(private fb: FormBuilder) {
+    this.nodesForm = this.fb.array([]);
+  }
+
   private svg: any;
   private container: any;
   private width = 0;
@@ -322,5 +339,71 @@ export class TreeCreateComponent {
     return `M${d.source.x},${d.source.y} H${(d.source.x + d.target.x) / 2} V${
       d.target.y
     } H${d.target.x}`;
+  }
+
+  private openEditPanel(node: TreeNode): void {
+    this.editingNode = node;
+    this.nodeName = node.name;
+    this.nodeDescription = node.description || '';
+    this.sidebarVisible = true;
+  }
+
+  private saveNodeDetails(): void {
+    if (this.editingNode) {
+      this.editingNode.name = this.nodeName;
+      this.editingNode.description = this.nodeDescription;
+      this.renderTree();
+      this.sidebarVisible = false;
+      this.editingNode = null;
+    }
+  }
+
+  private initializeNodeForm(node: TreeNode): void {
+    const nodeForm = this.fb.group({
+      id: [node.id],
+      title: [node.name, Validators.required],
+      description: [node.description || ''],
+    });
+    this.nodesForm.push(nodeForm);
+  }
+
+  private updateNodeFromForm(node: TreeNode): void {
+    const nodeFormIndex = this.nodesForm.controls.findIndex(
+      (control: AbstractControl) => control.get('id')?.value === node.id
+    );
+
+    if (nodeFormIndex > -1 && this.nodesForm.at(nodeFormIndex).valid) {
+      const formValue = this.nodesForm.at(nodeFormIndex).value;
+      node.name = formValue.title;
+      node.description = formValue.description;
+      this.renderTree();
+    }
+  }
+
+  private resetNodeForm(nodeId: string): void {
+    const nodeFormIndex = this.nodesForm.controls.findIndex(
+      (control: AbstractControl) => control.get('id')?.value === nodeId
+    );
+    if (nodeFormIndex > -1) {
+      this.nodesForm.removeAt(nodeFormIndex);
+    }
+  }
+
+  private createNewNodeWithForm(): TreeNode {
+    const newNodeId = `node-${this.nodeIdCounter++}`;
+    const newNodeForm = this.fb.group({
+      id: [newNodeId],
+      title: ['New Node', Validators.required],
+      description: [''],
+    });
+
+    this.nodesForm.push(newNodeForm);
+
+    return {
+      id: newNodeId,
+      name: newNodeForm.get('title')?.value || 'New Node',
+      description: newNodeForm.get('description')?.value || '',
+      children: [],
+    };
   }
 }

@@ -15,7 +15,6 @@ export const routes: Route[] = [
         path: LayoutNavigationRoutes.Dashboard,
         loadChildren: () =>
           import('@closing/dashboard/feature-shell').then((m) => m.routes),
-        outlet: 'sub-router',
         canActivate: [AuthGuard],
         providers: [AuthStore],
       },
@@ -23,7 +22,6 @@ export const routes: Route[] = [
         path: LayoutNavigationRoutes.Tree,
         loadChildren: () =>
           import('@closing/tree/feature-shell').then((m) => m.routes),
-        outlet: 'sub-router',
         canActivate: [AuthGuard],
         providers: [AuthStore],
       },

@@ -45,6 +45,8 @@ export class UsersService {
   async createOne(body: CreateUserDto): Promise<User> {
     const user: User = new User();
     user.email = body.email;
+    user.firstname = body.firstname;
+    user.lastname = body.lastname;
     await this.repository
       .findOne({ where: { email: body.email } })
       .then((user) => {

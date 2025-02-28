@@ -35,12 +35,10 @@ export class FeatureComponent {
   ];
 
   selectNodeTree(node: TreeNode): void {
-    this.router.navigate([
-      { outlets: { 'sub-router': ['tree', 'edit', node.id] } },
-    ]);
+    this.router.navigate(['tree', 'edit', node.id]);
   }
 
   addNewNodeTree(): void {
-    this.router.navigate([{ outlets: { 'sub-router': ['tree'] } }]);
+    this.router.navigate(['tree']);
   }
 }

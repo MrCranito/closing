@@ -60,13 +60,15 @@ export class RegisterComponent {
   readonly isFormValid = computed(() => this.registerForm.valid);
 
   async submit() {
-    console.log('ici');
     if (this.isFormValid() && this.termAndConditions()) {
       await this.authStore.register({
-        email: this.registerForm.controls.email.value ?? '',
-        password: this.registerForm.controls.password.value ?? '',
-        lastname: this.registerForm.controls.lastname.value ?? '',
-        firstname: this.registerForm.controls.firstname.value ?? '',
+        user: {
+          email: this.registerForm.controls.email.value ?? '',
+          password: this.registerForm.controls.password.value ?? '',
+          lastname: this.registerForm.controls.lastname.value ?? '',
+          firstname: this.registerForm.controls.firstname.value ?? '',
+          isEmailVerified: false,
+        },
       });
     } else {
       this.registerForm.markAllAsTouched();

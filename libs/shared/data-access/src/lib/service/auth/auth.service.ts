@@ -10,11 +10,8 @@ export class AuthService {
   private http: HttpClient = inject(HttpClient);
   private env: Environment = inject(ENVIRONMENT);
 
-  register(email: string, password: string): Observable<User> {
-    return this.http.post<User>(this.env.apiUrl + '/api/auth/register', {
-      email,
-      password,
-    });
+  register(user: User): Observable<User> {
+    return this.http.post<User>(this.env.apiUrl + '/api/auth/register', user);
   }
 
   update(user: Partial<User>, companyName: string): Observable<User> {

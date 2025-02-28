@@ -8,21 +8,23 @@ export class User {
   id: number;
 
   @Column({ unique: true })
-  @IsNotEmpty({})
+  @IsNotEmpty()
   @IsEmail()
   public email: string;
 
-  @Column({ nullable: true })
+  @Column()
   @IsBoolean()
   public isEmailVerified: boolean;
 
-  @Column({ nullable: true })
+  @Column()
+  @IsNotEmpty()
   @IsString()
-  public firstname: string | null;
+  public firstname: string;
 
-  @Column({ nullable: true })
+  @Column()
+  @IsNotEmpty()
   @IsString()
-  public lastname: string | null;
+  public lastname: string;
 
   @Column({ nullable: true })
   @IsString()

@@ -64,29 +64,24 @@ export const AuthStore = signalStore(
         )
       ),
       register: rxMethod<{
-        email: string;
-        password: string;
-        lastname: string;
-        firstname: string;
+        user: User;
       }>(
         pipe(
           tap(() => patchState(store, { loading: true })),
           switchMap((parameters) => {
-            return authService
-              .register(parameters.email, parameters.password)
-              .pipe(
-                tapResponse({
-                  next: (user) => patchState(store, { user, loading: false }),
-                  error: (err) => {
-                    notificationStore.addNotification({
-                      id: uuidv4(),
-                      message: 'Error on register',
-                      status: NotificationStatusEnum.Error,
-                    });
-                    patchState(store, { loading: false });
-                  },
-                })
-              );
+            return authService.register(parameters.user).pipe(
+              tapResponse({
+                next: (user) => patchState(store, { user, loading: false }),
+                error: (err) => {
+                  notificationStore.addNotification({
+                    id: uuidv4(),
+                    message: 'Error on register',
+                    status: NotificationStatusEnum.Error,
+                  });
+                  patchState(store, { loading: false });
+                },
+              })
+            );
           })
         )
       ),
