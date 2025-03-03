@@ -3,49 +3,83 @@ import {
   Post,
   Body,
   UseGuards,
-  Request,
   Get,
-  Patch,
-  Param,
+  Put,
+  Query,
+  Request,
 } from '@nestjs/common';
-import { AuthService } from './../services/auth.service';
-import { JwtAuthGuard } from './../jwt-auth.guard';
+import { AuthService } from '../services/auth.service';
 import { User } from '../../users/entities/user.entity';
+import { RegisterDto } from '../dto/register.dto';
+import { LoginDto } from '../dto/login.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() body: { user: User }) {
-    return this.authService.register(body.user);
+  async register(@Body() registerDto: RegisterDto): Promise<User> {
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
-  login(
-    @Body() body: { email: string; password: string }
+  async login(
+    @Body() loginDto: LoginDto
   ): Promise<{ token: string; user: User }> {
-    return this.authService.login(body.email, body.password);
-  }
-
-  @Patch('update-password/:id')
-  updatePassword(@Param() id: number, @Body() body: { password: string }) {
-    return this.authService.updatePassword(id, body.password);
-  }
-
-  @Post('send-email-verification')
-  sendVerificationEmail(@Body() body: { email: string }) {
-    return this.authService.sendVerificationEmail(body.email);
+    return this.authService.login(loginDto);
   }
 
   @Post('verify-email')
-  verifyEmail(@Body() body: { email: string }) {
-    return this.authService.verifyEmail(body.email);
+  async verifyEmail(@Query('token') token: string): Promise<void> {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('email-verification')
+  async resendVerificationEmail(@Body('email') email: string): Promise<void> {
+    return this.authService.resendVerificationEmail(email);
+  }
+
+  @Post('forgot-password')
+  async requestPasswordReset(@Body('email') email: string): Promise<void> {
+    return this.authService.requestPasswordReset(email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(
+    @Query('token') token: string,
+    @Body('newPassword') newPassword: string
+  ): Promise<void> {
+    return this.authService.resetPassword(token, newPassword);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Request() req,
+    @Body('currentPassword') currentPassword: string,
+    @Body('newPassword') newPassword: string
+  ): Promise<void> {
+    return this.authService.changePassword(
+      req.user.id,
+      currentPassword,
+      newPassword
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('update')
+  async updateUser(
+    @Request() req,
+    @Body() updateDto: UpdateUserDto
+  ): Promise<User> {
+    return this.authService.updateUser(req.user.id, updateDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('validate')
-  validateToken(@Request() req) {
-    return this.authService.getUserByEmail(req.user.email);
+  async validateToken(@Request() req): Promise<User> {
+    return this.authService.validateUser(req.user.id);
   }
 }

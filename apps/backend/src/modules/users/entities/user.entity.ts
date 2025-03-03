@@ -1,37 +1,79 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { Company } from '../../company/entities/company.entity';
 
-@Entity()
+export enum UserRole {
+  OWNER = 'owner',
+  ADMIN = 'admin',
+  USER = 'user',
+}
+
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({ unique: true })
-  @IsNotEmpty()
-  @IsEmail()
-  public email: string;
-
-  @Column()
-  @IsBoolean()
-  public isEmailVerified: boolean;
-
-  @Column()
-  @IsNotEmpty()
-  @IsString()
-  public firstname: string;
-
-  @Column()
-  @IsNotEmpty()
-  @IsString()
-  public lastname: string;
-
-  @Column({ nullable: true })
-  @IsString()
-  public phone: string | null;
+  email: string;
 
   @Column()
   @Exclude()
-  @IsNotEmpty()
-  public password: string;
+  password: string;
+
+  @Column()
+  firstname: string;
+
+  @Column()
+  lastname: string;
+
+  @Column({ name: 'is_email_verified', default: false })
+  isEmailVerified: boolean;
+
+  @Column({ name: 'email_verification_token', nullable: true })
+  @Exclude()
+  emailVerificationToken: string;
+
+  @Column({ name: 'email_verification_token_expiry', nullable: true })
+  emailVerificationTokenExpiry: Date;
+
+  @Column({ name: 'password_reset_token', nullable: true })
+  @Exclude()
+  passwordResetToken: string;
+
+  @Column({ name: 'password_reset_token_expiry', nullable: true })
+  passwordResetTokenExpiry: Date;
+
+  @Column({ name: 'last_login', nullable: true })
+  lastLogin: Date;
+
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.USER,
+  })
+  role: UserRole;
+
+  @Column('uuid', { name: 'team_ids', array: true, default: [] })
+  teamIds: string[];
+
+  @ManyToOne(() => Company, (company) => company.users, { nullable: true })
+  @JoinColumn({ name: 'company_id' })
+  company: Company;
+
+  @Column({ name: 'company_id', nullable: true })
+  companyId: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

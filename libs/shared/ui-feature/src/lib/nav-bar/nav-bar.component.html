@@ -40,7 +40,15 @@
       </div>
       <div class="flex items-center">
         <div class="flex items-center ms-3">
-          <div>
+          <div class="flex justify-between">
+            <button
+              outlined
+              pButton
+              type="button"
+              label="Start a new session"
+              (click)="startNewSession()"
+              class="p-button-sm mr-3"
+            ></button>
             <button
               type="button"
               (click)="menuUser.toggle($event)"

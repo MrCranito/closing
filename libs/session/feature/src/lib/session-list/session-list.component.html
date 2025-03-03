@@ -1,0 +1,61 @@
+<div class="flex px-6 pb-6">
+  <p-table
+    #dt
+    class="w-full"
+    [value]="sessions()"
+    [columns]="columns"
+    stripedRows
+    [rows]="10"
+    [paginator]="true"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [loading]="loading()"
+    [totalRecords]="total()"
+    (onLazyLoad)="onLazyLoad($event)"
+    [lazy]="true"
+    dataKey="id"
+  >
+    <ng-template #caption>
+      <div class="flex">
+        <p-iconfield iconPosition="left" class="ml-auto">
+          <form [formGroup]="form">
+            <input
+              pInputText
+              type="text"
+              class="p-inputtext-sm"
+              formControlName="search"
+              placeholder="Search..."
+            />
+          </form>
+        </p-iconfield>
+      </div>
+    </ng-template>
+    <ng-template #header>
+      <tr>
+        @for (column of columns; track column.field) {
+        <th style="min-width: 15rem">
+          <div class="flex items-center">
+            {{ column.header }}
+            @if (column.sortable) {
+            <p-sortIcon field="name"></p-sortIcon>
+            } @if (column.filterable) {
+            <p-columnFilter type="text" field="name" display="menu" />
+            }
+          </div>
+        </th>
+        }
+      </tr>
+    </ng-template>
+    <ng-template #body let-session>
+      <tr>
+        @for (column of columns; track column.field) {
+        <td>{{ session[column.field] }}</td>
+        }
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="7">No sessions found.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

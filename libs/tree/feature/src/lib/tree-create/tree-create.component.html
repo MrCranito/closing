@@ -6,8 +6,56 @@
   </div>
 </div>
 
-<p-sidebar [(visible)]="sidebarVisible" [showCloseIcon]="false">
-  <input type="text" pInputText placeholder="Name" />
-  <h3>Sidebar</h3>
-  <p>Lorem ipsum dolor sit amet...</p>
+<p-sidebar
+  [(visible)]="sidebarVisible"
+  [showCloseIcon]="false"
+  styleClass="p-4 w-96"
+>
+  <ng-container *ngIf="editingNode">
+    <h3 class="text-xl font-bold mb-4">Edit Node</h3>
+    <form [formGroup]="nodeForm" class="flex flex-col gap-4">
+      <div class="field">
+        <label for="name" class="block text-sm font-medium mb-1">Name</label>
+        <input
+          id="name"
+          type="text"
+          pInputText
+          formControlName="name"
+          class="w-full"
+          placeholder="Enter node name"
+        />
+      </div>
+
+      <div class="field">
+        <label for="description" class="block text-sm font-medium mb-1"
+          >Description</label
+        >
+        <textarea
+          id="description"
+          pTextarea
+          formControlName="description"
+          class="w-full"
+          rows="3"
+          placeholder="Enter node description"
+        ></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-4">
+        <button
+          pButton
+          type="button"
+          label="Cancel"
+          class="p-button-text"
+          (click)="sidebarVisible = false"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          label="Save"
+          [disabled]="!nodeForm.valid"
+          (click)="saveNodeDetails()"
+        ></button>
+      </div>
+    </form>
+  </ng-container>
 </p-sidebar>

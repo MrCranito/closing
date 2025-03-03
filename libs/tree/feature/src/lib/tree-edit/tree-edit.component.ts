@@ -1,6 +1,12 @@
 import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TreeNode } from '@closing/shared/interfaces';
+import {
+  Tree,
+  TreeNode,
+  TreePermissionLevel,
+  TreeStatus,
+  TreeRootNode,
+} from '@closing/shared/interfaces';
 import * as d3 from 'd3';
 
 type LinkData = {
@@ -19,11 +25,67 @@ type LinkData = {
 })
 export class TreeEditComponent {
   @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
-  private treeData: TreeNode = {
-    id: 'root',
-    name: 'Root Node',
-    children: [{ id: 'secondary', name: 'child', children: [] }],
+  private treeData: Tree = {
+    id: 'sales_1',
+    name: 'Tree Node Default',
+    description: 'A default tree node structure',
+    icon: 'fa-project-diagram',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+    createdBy: {
+      id: '1',
+      lastname: 'Doe',
+      firstname: 'John',
+      email: 'john.doe@example.com',
+      isEmailVerified: true,
+    },
+    updatedBy: {
+      id: '1',
+      lastname: 'Doe',
+      firstname: 'John',
+      email: 'john.doe@example.com',
+      isEmailVerified: true,
+    },
+    permissions: [
+      {
+        entityId: '1',
+        entityType: 'tree',
+        level: TreePermissionLevel.READ,
+        grandedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+        grandedBy: {
+          id: '1',
+          lastname: 'Doe',
+          firstname: 'John',
+          email: 'john.doe@example.com',
+          isEmailVerified: true,
+        },
+      },
+    ],
+    status: TreeStatus.ACTIVE,
+    rootNode: {
+      id: '1',
+      name: 'Root Node',
+      description: 'A default root node structure',
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      createdBy: {
+        id: '1',
+        lastname: 'Doe',
+        firstname: 'John',
+        email: 'john.doe@example.com',
+        isEmailVerified: true,
+      },
+      updatedBy: {
+        id: '1',
+        lastname: 'Doe',
+        firstname: 'John',
+        email: 'john.doe@example.com',
+        isEmailVerified: true,
+      },
+      children: [],
+    },
   };
+
   private svg: any;
   private container: any;
   private width = 0;
@@ -82,11 +144,11 @@ export class TreeEditComponent {
   private renderTree(): void {
     // Adjust nodeSize to account for dynamic text size
     const treeLayout = d3
-      .tree<TreeNode>()
+      .tree<TreeRootNode>()
       .nodeSize([150, 100]) // Fixed width for node, but dynamic height based on content
       .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // Increase separation between nodes    const root = d3.hierarchy(this.treeData, d => d.children);
 
-    const root = d3.hierarchy(this.treeData, (d) => d.children);
+    const root = d3.hierarchy(this.treeData.rootNode, (d) => d.children);
 
     treeLayout(root);
 
@@ -265,15 +327,22 @@ export class TreeEditComponent {
 
   addNode(parentId: string): void {
     const parentNode = this.findNode(this.treeData, parentId);
+
     if (parentNode) {
       const newNode: TreeNode = {
         id: `node-${this.nodeIdCounter++}`,
         name: 'New Node',
+        description: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: this.treeData.createdBy,
+        updatedBy: this.treeData.updatedBy,
+        widgets: [],
         children: [],
       };
       parentNode.children = parentNode.children || [];
       parentNode.children.push(newNode);
-      this.renderTree();
+      this.renderTree(); // Re-render the tree after adding a node
     }
   }
 
@@ -282,30 +351,56 @@ export class TreeEditComponent {
     if (parentNode) {
       parentNode.children = parentNode?.children?.filter(
         (child) => child.id !== nodeId
-      ); // Remove the node and its children
-      this.renderTree(); // Re-render tree after removal
+      );
+      this.renderTree(); // Re-render the tree after removing a node
+
+      // Reset highlighted node if it was deleted
+      if (this.highlightedNode?.id === nodeId) {
+        this.highlightedNode = null;
+      }
     }
   }
 
-  private findNode(tree: TreeNode, id: string): TreeNode | null {
-    if (tree.id === id) return tree;
-    if (!tree.children) return null;
-    for (const child of tree.children) {
-      const found = this.findNode(child, id);
-      if (found) return found;
+  private findNode(
+    node: Tree | TreeRootNode | TreeNode,
+    id: string
+  ): TreeNode | null {
+    // Handle Tree type
+    if ('rootNode' in node && !('children' in node)) {
+      return this.findNode(node.rootNode, id);
+    }
+
+    // Handle TreeRootNode and TreeNode types
+    if ('children' in node && Array.isArray(node.children)) {
+      if (node.id === id) return node as TreeNode;
+
+      for (const child of node.children) {
+        if (child.id === id) return child as TreeNode;
+        const found = this.findNode(child, id);
+        if (found) return found;
+      }
     }
     return null;
   }
 
-  // Find the parent node to remove a child
-  private findParentNode(tree: TreeNode, id: string): TreeNode | null {
-    if (!tree.children) return null;
-    for (const child of tree.children) {
-      if (child.id === id) {
-        return tree; // Parent node found
+  private findParentNode(
+    node: Tree | TreeRootNode | TreeNode,
+    id: string
+  ): TreeNode | null {
+    // Handle Tree type
+    if ('rootNode' in node && !('children' in node)) {
+      return this.findParentNode(node.rootNode, id);
+    }
+
+    // Handle TreeRootNode and TreeNode types
+    if ('children' in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (child.id === id) {
+          return node as TreeNode;
+        }
+        const found = this.findParentNode(child, id);
+        if (found) return found;
       }
-      const found = this.findParentNode(child, id);
-      if (found) return found;
     }
     return null;
   }

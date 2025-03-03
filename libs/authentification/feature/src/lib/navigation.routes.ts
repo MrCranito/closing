@@ -5,4 +5,5 @@ export const NavigationRoutes = {
   NotVerifiedAccount: 'not-verified-account',
   TermAndConditions: 'term-and-conditions',
   ResetPassword: 'reset-password/:id',
+  VerifyEmail: 'verify-email',
 };

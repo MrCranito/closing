@@ -1,91 +1,214 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+import { EmailService } from '../../email/email.service';
 import { User } from '../../users/entities/user.entity';
-import { UsersService } from '../../users/services/user.service';
+import { RegisterDto } from '../dto/register.dto';
+import { LoginDto } from '../dto/login.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+    private jwtService: JwtService,
+    private emailService: EmailService
   ) {}
 
-  async register(user: User) {
-    const isUserExists = await this.usersService.findOne({
-      where: { email: user.email },
+  async register(registerDto: RegisterDto): Promise<User> {
+    const existingUser = await this.usersRepository.findOne({
+      where: { email: registerDto.email },
     });
-    if (isUserExists) {
-      throw new UnauthorizedException('User already exists');
+
+    if (existingUser) {
+      throw new BadRequestException('User already exists');
     }
 
-    await this.usersService.createOne({
-      email: user.email,
-      password: user.password,
-      lastname: user.lastname,
-      firstname: user.firstname,
+    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    const verificationToken = uuidv4();
+    const verificationTokenExpiry = new Date();
+    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24);
+
+    const user = this.usersRepository.create({
+      ...registerDto,
+      password: hashedPassword,
+      emailVerificationToken: verificationToken,
+      emailVerificationTokenExpiry: verificationTokenExpiry,
     });
-    return { message: 'User registered' };
+
+    await this.usersRepository.save(user);
+    await this.emailService.sendVerificationEmail(
+      user.email,
+      verificationToken
+    );
+
+    return user;
   }
 
-  async login(email: string, password: string) {
-    const user = await this.usersService.findOne({ where: { email } });
+  async login(loginDto: LoginDto): Promise<{ token: string; user: User }> {
+    const user = await this.usersRepository.findOne({
+      where: { email: loginDto.email },
+    });
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password
+    );
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.jwtService.sign({ id: user.id, email: user.email });
+    user.lastLogin = new Date();
+    await this.usersRepository.save(user);
+
+    const token = this.jwtService.sign({ userId: user.id });
     return { token, user };
   }
 
-  async updatePassword(id: number, password: string) {
-    await this.usersService.updateOne(id, { password });
-    return { message: 'Password updated' };
-  }
+  async verifyEmail(token: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { emailVerificationToken: token },
+    });
 
-  async refresh(token: string) {
-    const payload = this.jwtService.verify(token);
-    const user = await this.usersService.findOne({ where: { id: payload.id } });
     if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    return this.jwtService.sign({ id: user.id, email: user.email });
-  }
-
-  async sendVerificationEmail(email: string) {
-    const user = await this.usersService.findOne({ where: { email } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new BadRequestException('Invalid verification token');
     }
 
-    const url =
-      process.env.FRONTEND_URL + `api/auth/verifiying-account/${user.id}`;
+    if (user.emailVerificationTokenExpiry < new Date()) {
+      throw new BadRequestException('Verification token has expired');
+    }
 
-    return url;
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationTokenExpiry = null;
+    await this.usersRepository.save(user);
   }
 
-  async getUserByEmail(email: string) {
-    const user = await this.usersService.findOne({ where: { email } });
+  async resendVerificationEmail(email: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    const verificationToken = uuidv4();
+    const verificationTokenExpiry = new Date();
+    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24);
+
+    user.emailVerificationToken = verificationToken;
+    user.emailVerificationTokenExpiry = verificationTokenExpiry;
+    await this.usersRepository.save(user);
+
+    await this.emailService.sendVerificationEmail(email, verificationToken);
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const resetToken = uuidv4();
+    const resetTokenExpiry = new Date();
+    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1);
+
+    user.passwordResetToken = resetToken;
+    user.passwordResetTokenExpiry = resetTokenExpiry;
+    await this.usersRepository.save(user);
+
+    await this.emailService.sendPasswordResetEmail(email, resetToken);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { passwordResetToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    if (user.passwordResetTokenExpiry < new Date()) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.passwordResetToken = null;
+    user.passwordResetTokenExpiry = null;
+    await this.usersRepository.save(user);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await this.usersRepository.save(user);
+  }
+
+  async updateUser(userId: string, updateDto: UpdateUserDto): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    Object.assign(user, updateDto);
+    return this.usersRepository.save(user);
+  }
+
+  async validateUser(userId: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
     return user;
-  }
-
-  async verifyEmail(email: string) {
-    const user = await this.usersService.findOne({ where: { email } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    await this.usersService.updateOne(user.id, { isEmailVerified: true });
-
-    return { message: 'Email verified' };
   }
 }

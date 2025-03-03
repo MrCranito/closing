@@ -42,4 +42,8 @@ export class NavBarComponent {
   navigateToLanding(): void {
     this.router.navigate(['/']);
   }
+
+  startNewSession(): void {
+    this.router.navigate(['/session']);
+  }
 }

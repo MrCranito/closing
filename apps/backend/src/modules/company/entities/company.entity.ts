@@ -1,31 +1,61 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
-import { Exclude } from 'class-transformer';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
-@Entity()
+export enum SubscriptionPlan {
+  FREE = 'FREE',
+  PRO = 'PRO',
+}
+
+@Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
-
-  @Column({ unique: true })
-  @IsNotEmpty()
-  @IsEmail()
-  public name: string;
-
-  @Column({ nullable: true })
-  @IsString()
-  public email: string | null;
-
-  @Column({ nullable: true })
-  @IsString()
-  public phone: string | null;
-
-  @Column({ nullable: true })
-  @IsString()
-  public address: string | null;
+  id: string;
 
   @Column()
-  @Exclude()
-  @IsNotEmpty()
-  public ownerId: string;
+  name: string;
+
+  @Column({ nullable: true })
+  address: string;
+
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ nullable: true })
+  website: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ name: 'owner_id', nullable: true })
+  ownerId: string;
+
+  @Column({
+    name: 'subscription_plan',
+    type: 'enum',
+    enum: SubscriptionPlan,
+    default: SubscriptionPlan.FREE,
+  })
+  subscriptionPlan: SubscriptionPlan;
+
+  @Column({ name: 'subscription_start_date', nullable: true })
+  subscriptionStartDate: Date;
+
+  @Column({ name: 'subscription_end_date', nullable: true })
+  subscriptionEndDate: Date;
+
+  @OneToMany(() => User, (user) => user.company)
+  users: User[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 }

@@ -8,7 +8,12 @@ export class AuthInitService {
   private authStore = inject(AuthStore);
 
   initAuth() {
+    // Initial token validation
     this.authStore.validateToken();
+
+    // Start periodic token validation
+    this.authStore.startPeriodicTokenValidation();
+
     return;
   }
 }

@@ -16,6 +16,10 @@ export class AuthGuard implements CanActivate {
       return false;
     }
 
+    console.log('ici');
+
+    console.log(this.authStore.user());
+
     if (!this.authStore.user()?.isEmailVerified) {
       this.router.navigate(['/auth/not-verified-account']);
     }

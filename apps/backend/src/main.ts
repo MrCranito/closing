@@ -1,11 +1,6 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
-import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 
 import { AppModule } from './app/app.module';
 import { IAppConfig } from './app/config/app.config';
@@ -21,6 +16,17 @@ async function bootstrap() {
 
   const appConfig = configService.get<IAppConfig>('app');
   console.log(`✅ Retrieved app config: ${JSON.stringify(appConfig)}`);
+
+  // Run migrations
+  const dataSource = app.get(DataSource);
+  try {
+    console.log('🔄 Running database migrations...');
+    await dataSource.runMigrations();
+    console.log('✅ Database migrations completed successfully.');
+  } catch (error) {
+    console.error('❌ Error running migrations:', error);
+    throw error;
+  }
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);

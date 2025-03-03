@@ -2,6 +2,13 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Router, RouterModule } from '@angular/router';
+import { MainNavigationRoutes } from '@closing/shared/interfaces';
+
+export interface MenuItem {
+  label: string;
+  icon: string;
+  routerLink: string;
+}
 
 @Component({
   selector: 'lib-shared-side-nav',
@@ -13,6 +20,34 @@ import { Router, RouterModule } from '@angular/router';
 })
 export class SideNavComponent {
   private router: Router = inject(Router);
+
+  protected menuItems: MenuItem[] = [
+    {
+      label: 'Dashboard',
+      icon: 'pi pi-home',
+      routerLink: MainNavigationRoutes.Dashboard,
+    },
+    {
+      label: 'Trees',
+      icon: 'pi pi-sitemap',
+      routerLink: MainNavigationRoutes.Tree,
+    },
+    {
+      label: 'Sessions',
+      icon: 'pi pi-calendar',
+      routerLink: MainNavigationRoutes.Session,
+    },
+    {
+      label: 'Users',
+      icon: 'pi pi-users',
+      routerLink: MainNavigationRoutes.Users,
+    },
+    {
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      routerLink: MainNavigationRoutes.Settings,
+    },
+  ];
 
   navigateToLogin(): void {
     this.router.navigate(['/auth']);

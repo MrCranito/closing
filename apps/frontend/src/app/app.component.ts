@@ -1,24 +1,23 @@
-import { DOCUMENT } from '@angular/common';
-import { AfterViewInit, Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
+import { ThemeService } from '@closing/shared/utils';
 
 @Component({
+  standalone: true,
   imports: [RouterModule, ToastModule],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent {
   title = 'frontend';
 
-  constructor(@Inject(DOCUMENT) private document: Document) {}
+  private themeService = inject(ThemeService);
 
-  ngAfterViewInit(): void {
-    // if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-    //   this.document.querySelector('html')?.classList.remove('dark-theme'); // dark-theme class
-    // } else {
-    //   this.document.querySelector('html')?.classList.add('dark-theme'); // dark-theme class
-    // }
+  isDarkMode$ = this.themeService.isDarkMode$;
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }

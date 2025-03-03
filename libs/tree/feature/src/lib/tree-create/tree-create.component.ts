@@ -1,16 +1,17 @@
 import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TreeNode } from '@closing/shared/interfaces';
+import { TreeNode, User } from '@closing/shared/interfaces';
 import { SidebarModule } from 'primeng/sidebar';
 import * as d3 from 'd3';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
+import { InputTextModule } from 'primeng/inputtext';
+import { Textarea } from 'primeng/inputtextarea';
 import {
   FormBuilder,
-  FormArray,
   FormGroup,
   Validators,
-  AbstractControl,
+  ReactiveFormsModule,
 } from '@angular/forms';
 
 type LinkData = {
@@ -20,7 +21,15 @@ type LinkData = {
 
 @Component({
   selector: 'lib-tree-create-feature',
-  imports: [CommonModule, SidebarModule, ButtonModule, AvatarModule],
+  imports: [
+    CommonModule,
+    SidebarModule,
+    ButtonModule,
+    AvatarModule,
+    InputTextModule,
+    Textarea,
+    ReactiveFormsModule,
+  ],
   standalone: true,
   templateUrl: './tree-create.component.html',
   host: {
@@ -31,21 +40,28 @@ export class TreeCreateComponent {
   @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
 
   sidebarVisible: boolean = false;
-  editingNode: TreeNode | null = null; // To store the node being edited
-  nodeName: string = ''; // To store the name of the node being edited
-  nodeDescription: string = ''; // To store the description of the node being edited
+  editingNode: TreeNode | null = null;
+  nodeForm: FormGroup;
+
+  private defaultUser: User = {
+    id: '1',
+    lastname: 'Doe',
+    firstname: 'John',
+    email: 'john.doe@example.com',
+    isEmailVerified: true,
+  };
 
   private treeData: TreeNode = {
     id: 'root',
     name: 'Root Node',
-    children: [{ id: 'secondary', name: 'child', children: [] }],
+    description: 'Root node of the tree',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: this.defaultUser,
+    updatedBy: this.defaultUser,
+    widgets: [],
+    children: [],
   };
-
-  private nodesForm: FormArray;
-
-  constructor(private fb: FormBuilder) {
-    this.nodesForm = this.fb.array([]);
-  }
 
   private svg: any;
   private container: any;
@@ -53,9 +69,16 @@ export class TreeCreateComponent {
   private height = 0;
   private nodeIdCounter = 1;
   private zoom: any;
-  private highlightedNode: TreeNode | null = null; // To store the highlighted node
-  private button: any; // To store the plus button for adding children
-  private deleteButton: any; // To store the delete button for removing nodes
+  private highlightedNode: TreeNode | null = null;
+  private button: any;
+  private deleteButton: any;
+
+  constructor(private fb: FormBuilder) {
+    this.nodeForm = this.fb.group({
+      name: ['', Validators.required],
+      description: [''],
+    });
+  }
 
   ngAfterViewInit(): void {
     this.setDimensions();
@@ -90,12 +113,12 @@ export class TreeCreateComponent {
       .attr('height', '100%')
       .call(this.zoom);
 
-    const width = this.treeContainer.nativeElement.clientWidth; // Get container width
-    const height = this.treeContainer.nativeElement.clientHeight; // Get container height
+    const width = this.treeContainer.nativeElement.clientWidth;
+    const height = this.treeContainer.nativeElement.clientHeight;
 
     this.container = this.svg
       .append('g')
-      .attr('transform', `translate(${width / 2}, ${height / 10})`); // Center horizontally, top (y=0)
+      .attr('transform', `translate(${width / 2}, ${height / 10})`);
   }
 
   private initializeTree(): void {
@@ -103,14 +126,12 @@ export class TreeCreateComponent {
   }
 
   private renderTree(): void {
-    // Adjust nodeSize to account for dynamic text size
     const treeLayout = d3
       .tree<TreeNode>()
-      .nodeSize([150, 100]) // Fixed width for node, but dynamic height based on content
-      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // Increase separation between nodes    const root = d3.hierarchy(this.treeData, d => d.children);
+      .nodeSize([150, 100])
+      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
 
     const root = d3.hierarchy(this.treeData, (d) => d.children);
-
     treeLayout(root);
 
     const nodes = root.descendants();
@@ -145,43 +166,41 @@ export class TreeCreateComponent {
         this.onNodeClick(d.data)
       );
 
-    // Append a placeholder rect (initially small)
-    const rect = nodeGroup
+    // Append rectangles
+    nodeGroup
       .append('rect')
-      .attr('rx', 5) // Rounded corners
+      .attr('rx', 5)
       .attr('ry', 5)
       .style('fill', 'white')
-      .style('stroke', 'black'); // Border color
+      .style('stroke', 'black');
 
     // Append text
     const text = nodeGroup
       .append('text')
-      .attr('text-anchor', 'middle') // Center text horizontally
-      .attr('dy', 5) // Adjust vertical alignment
+      .attr('text-anchor', 'middle')
+      .attr('dy', 5)
       .style('font-size', '14px')
       .text((d: d3.HierarchyPointNode<TreeNode>) => d.data.name);
 
-    // Update rectangle size **after** rendering text (to get correct dimensions)
+    // Update rectangle sizes
     nodeGroup.each(
       (_: d3.HierarchyPointNode<TreeNode>, i: number, nodes: SVGGElement[]) => {
-        const group = d3.select(nodes[i]); // Select current group
+        const group = d3.select(nodes[i]);
         const textElement = group.select('text').node() as SVGTextElement;
         if (!textElement) return;
 
-        const bbox = textElement.getBBox(); // Get text dimensions
-        const padding = 10; // Padding around text
+        const bbox = textElement.getBBox();
+        const padding = 10;
 
-        // Update rectangle size based on text
         group
           .select('rect')
-          .attr('x', -bbox.width / 2 - padding) // Centering
+          .attr('x', -bbox.width / 2 - padding)
           .attr('y', -bbox.height / 2 - padding / 2)
           .attr('width', bbox.width + padding * 2)
           .attr('height', bbox.height + padding);
       }
     );
 
-    // Append plus button next to clicked node if available
     if (this.highlightedNode) {
       this.createPlusButton(this.highlightedNode);
       this.createDeleteButton(this.highlightedNode);
@@ -193,8 +212,7 @@ export class TreeCreateComponent {
     const parentY = d.source.y;
     const childX = d.target.x;
     const childY = d.target.y;
-
-    const midY = (parentY + childY) / 2; // Intermediate join point
+    const midY = (parentY + childY) / 2;
 
     return `
       M${parentX},${parentY}
@@ -205,41 +223,33 @@ export class TreeCreateComponent {
   }
 
   private onNodeClick(selectedNode: TreeNode): void {
-    // Remove highlight from all nodes (reset to white)
     this.container.selectAll('.node rect').style('fill', 'white');
 
-    // Find and highlight the selected node
     this.container
       .selectAll('.node')
       .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode)
       .select('rect')
-      .style('fill', '#34d399'); // Apply green color
+      .style('fill', '#34d399');
 
-    // Store the highlighted node
     this.highlightedNode = selectedNode;
-
-    // Optionally recreate plus/delete buttons
+    this.openEditPanel(selectedNode);
     this.createPlusButton(this.highlightedNode);
     this.createDeleteButton(this.highlightedNode);
-
-    this.sidebarVisible = true;
   }
 
   private createPlusButton(node: TreeNode): void {
-    const nodeGroup = this.container
-      .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
-
-    // Remove existing plus button if any
     if (this.button) {
       this.button.remove();
     }
 
-    // Create new plus button
+    const nodeGroup = this.container
+      .selectAll('.node')
+      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
+
     this.button = nodeGroup
       .append('g')
       .attr('class', 'plus-button')
-      .attr('transform', 'translate(80, -20)') // Position button next to node
+      .attr('transform', 'translate(80, -20)')
       .on('click', () => this.addNode(node.id));
 
     this.button
@@ -258,20 +268,18 @@ export class TreeCreateComponent {
   }
 
   private createDeleteButton(node: TreeNode): void {
-    const nodeGroup = this.container
-      .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
-
-    // Remove existing delete button if any
     if (this.deleteButton) {
       this.deleteButton.remove();
     }
 
-    // Create new delete button
+    const nodeGroup = this.container
+      .selectAll('.node')
+      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
+
     this.deleteButton = nodeGroup
       .append('g')
       .attr('class', 'delete-button')
-      .attr('transform', 'translate(80, 20)') // Position button at the bottom of the node
+      .attr('transform', 'translate(80, 20)')
       .on('click', () => this.removeNode(node.id));
 
     this.deleteButton
@@ -288,122 +296,85 @@ export class TreeCreateComponent {
       .text('-');
   }
 
-  private addNode(parentId: string): void {
-    const parentNode = this.findNode(this.treeData, parentId);
-    if (parentNode) {
-      const newNode: TreeNode = {
-        id: `node-${this.nodeIdCounter++}`,
-        name: 'New Node',
-        children: [],
-      };
-      parentNode.children = parentNode.children || [];
-      parentNode.children.push(newNode);
-      this.renderTree();
-    }
-  }
-
-  private removeNode(nodeId: string): void {
-    const parentNode = this.findParentNode(this.treeData, nodeId);
-    if (parentNode) {
-      parentNode.children = parentNode?.children?.filter(
-        (child) => child.id !== nodeId
-      ); // Remove the node and its children
-      this.renderTree(); // Re-render tree after removal
-    }
-  }
-
-  private findNode(tree: TreeNode, id: string): TreeNode | null {
-    if (tree.id === id) return tree;
-    if (!tree.children) return null;
-    for (const child of tree.children) {
-      const found = this.findNode(child, id);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  // Find the parent node to remove a child
-  private findParentNode(tree: TreeNode, id: string): TreeNode | null {
-    if (!tree.children) return null;
-    for (const child of tree.children) {
-      if (child.id === id) {
-        return tree; // Parent node found
-      }
-      const found = this.findParentNode(child, id);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  private elbow(d: any): string {
-    return `M${d.source.x},${d.source.y} H${(d.source.x + d.target.x) / 2} V${
-      d.target.y
-    } H${d.target.x}`;
-  }
-
   private openEditPanel(node: TreeNode): void {
     this.editingNode = node;
-    this.nodeName = node.name;
-    this.nodeDescription = node.description || '';
+    this.nodeForm.patchValue({
+      name: node.name,
+      description: node.description || '',
+    });
     this.sidebarVisible = true;
   }
 
-  private saveNodeDetails(): void {
-    if (this.editingNode) {
-      this.editingNode.name = this.nodeName;
-      this.editingNode.description = this.nodeDescription;
+  saveNodeDetails(): void {
+    if (this.editingNode && this.nodeForm.valid) {
+      const formValue = this.nodeForm.value;
+      this.editingNode.name = formValue.name;
+      this.editingNode.description = formValue.description;
+      this.editingNode.updatedAt = new Date();
+      this.editingNode.updatedBy = this.defaultUser;
       this.renderTree();
       this.sidebarVisible = false;
       this.editingNode = null;
     }
   }
 
-  private initializeNodeForm(node: TreeNode): void {
-    const nodeForm = this.fb.group({
-      id: [node.id],
-      title: [node.name, Validators.required],
-      description: [node.description || ''],
-    });
-    this.nodesForm.push(nodeForm);
-  }
-
-  private updateNodeFromForm(node: TreeNode): void {
-    const nodeFormIndex = this.nodesForm.controls.findIndex(
-      (control: AbstractControl) => control.get('id')?.value === node.id
-    );
-
-    if (nodeFormIndex > -1 && this.nodesForm.at(nodeFormIndex).valid) {
-      const formValue = this.nodesForm.at(nodeFormIndex).value;
-      node.name = formValue.title;
-      node.description = formValue.description;
+  private addNode(parentId: string): void {
+    const parentNode = this.findNode(this.treeData, parentId);
+    if (parentNode) {
+      const newNode: TreeNode = {
+        id: `node-${this.nodeIdCounter++}`,
+        name: 'New Node',
+        description: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: this.defaultUser,
+        updatedBy: this.defaultUser,
+        widgets: [],
+        children: [],
+      };
+      parentNode.children = parentNode.children || [];
+      parentNode.children.push(newNode);
       this.renderTree();
+      this.openEditPanel(newNode);
     }
   }
 
-  private resetNodeForm(nodeId: string): void {
-    const nodeFormIndex = this.nodesForm.controls.findIndex(
-      (control: AbstractControl) => control.get('id')?.value === nodeId
-    );
-    if (nodeFormIndex > -1) {
-      this.nodesForm.removeAt(nodeFormIndex);
+  private removeNode(nodeId: string): void {
+    const parentNode = this.findParentNode(this.treeData, nodeId);
+    if (parentNode) {
+      parentNode.children = parentNode.children.filter(
+        (child) => child.id !== nodeId
+      );
+      this.renderTree();
+
+      if (this.highlightedNode?.id === nodeId) {
+        this.highlightedNode = null;
+        this.sidebarVisible = false;
+      }
     }
   }
 
-  private createNewNodeWithForm(): TreeNode {
-    const newNodeId = `node-${this.nodeIdCounter++}`;
-    const newNodeForm = this.fb.group({
-      id: [newNodeId],
-      title: ['New Node', Validators.required],
-      description: [''],
-    });
+  private findNode(node: TreeNode, id: string): TreeNode | null {
+    if (node.id === id) return node;
+    if (!node.children) return null;
 
-    this.nodesForm.push(newNodeForm);
+    for (const child of node.children) {
+      const found = this.findNode(child, id);
+      if (found) return found;
+    }
+    return null;
+  }
 
-    return {
-      id: newNodeId,
-      name: newNodeForm.get('title')?.value || 'New Node',
-      description: newNodeForm.get('description')?.value || '',
-      children: [],
-    };
+  private findParentNode(node: TreeNode, id: string): TreeNode | null {
+    if (!node.children) return null;
+
+    for (const child of node.children) {
+      if (child.id === id) {
+        return node;
+      }
+      const found = this.findParentNode(child, id);
+      if (found) return found;
+    }
+    return null;
   }
 }

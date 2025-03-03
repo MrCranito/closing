@@ -34,6 +34,13 @@ export const routes: Route[] = [
       ),
   },
   {
+    path: NavigationRoutes.VerifyEmail,
+    loadComponent: () =>
+      import('./verify-email/verify-email.component').then(
+        (m) => m.VerifyEmailComponent
+      ),
+  },
+  {
     path: '**',
     redirectTo: NavigationRoutes.Login,
   },

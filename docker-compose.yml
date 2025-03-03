@@ -4,16 +4,45 @@ services:
     image: api_closing:local
     build: .
     environment:
+      # Node and API Configuration
       - NODE_ENV=build
+      - API_PORT=8080
+
+      # Frontend URL
       - FRONTEND_URL=http://localhost:4300/
+
+      # Database Configuration
       - POSTGRES_HOST=api_closing_pg
       - POSTGRES_PORT=5432
       - POSTGRES_DATABASE_NAME=postgres
       - POSTGRES_USERNAME=admin
       - POSTGRES_PASSWORD=admin
-      - JWT_SECRET=secret
-      - JWT_EXPIRES_IN=50d
-      - API_PORT=8080
+
+      # MongoDB Configuration
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=closing
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGODB_URI=mongodb://admin:admin@mongodb:27017/closing?authSource=admin&directConnection=true
+      - MONGODB_DATABASE=closing
+
+      # JWT Configuration
+      - JWT_SECRET=your-super-secret-key-change-in-production
+      - JWT_EXPIRATION=1d
+
+      # SMTP Configuration for Email Service (Using Mailhog for local development)
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USER=
+      - SMTP_PASSWORD=
+      - SMTP_FROM=noreply@localhost
+      - SMTP_SECURE=false
+
+      # Security Configuration
+      - BCRYPT_SALT_ROUNDS=10
+      - VERIFICATION_TOKEN_EXPIRY=24h
+      - PASSWORD_RESET_TOKEN_EXPIRY=1h
     ports:
       - 8080:8080
     volumes:
@@ -21,6 +50,8 @@ services:
       - /var/www/node_modules
     depends_on:
       - api_closing_pg
+      - mailhog
+      - mongodb
     networks:
       - my-network
     command: /bin/sh
@@ -41,6 +72,33 @@ services:
     command: -p 5432
     networks:
       - my-network
+
+  mailhog:
+    container_name: mailhog
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025" # SMTP port
+      - "8025:8025" # Web UI port
+    networks:
+      - my-network
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=closing
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - my-network
+
+volumes:
+  mongodb_data:
+    driver: local
 
 networks:
   my-network:

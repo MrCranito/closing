@@ -60,4 +60,34 @@ export class AuthService {
   loginWithGoogle(): Observable<User> {
     return this.http.get<User>(this.env.apiUrl + '/api/auth/google/login');
   }
+
+  // Password reset methods
+  requestPasswordReset(email: string): Observable<void> {
+    return this.http.post<void>(this.env.apiUrl + '/api/auth/forgot-password', {
+      email,
+    });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(this.env.apiUrl + '/api/auth/reset-password', {
+      token,
+      newPassword,
+    });
+  }
+
+  changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Observable<void> {
+    return this.http.post<void>(this.env.apiUrl + '/api/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+  }
+
+  verifyEmail(token: string) {
+    return this.http.post(this.env.apiUrl + '/api/auth/verify-email', null, {
+      params: { token },
+    });
+  }
 }

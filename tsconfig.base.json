@@ -31,8 +31,18 @@
       "@closing/dashboard/feature-shell": [
         "libs/dashboard/feature-shell/src/index.ts"
       ],
+      "@closing/users/data-access": ["libs/users/data-access/src/index.ts"],
+      "@closing/users/feature": ["libs/users/feature/src/index.ts"],
+      "@closing/users/feature-shell": ["libs/users/feature-shell/src/index.ts"],
       "@closing/layout/feature": ["libs/layout/feature/src/index.ts"],
-      "@closing/layout/feature-shell": ["libs/layout/feature-shell/src/index.ts"],
+      "@closing/layout/feature-shell": [
+        "libs/layout/feature-shell/src/index.ts"
+      ],
+      "@closing/session/data-access": ["libs/session/data-access/src/index.ts"],
+      "@closing/session/feature": ["libs/session/feature/src/index.ts"],
+      "@closing/session/feature-shell": [
+        "libs/session/feature-shell/src/index.ts"
+      ],
       "@closing/shared/data-access": ["libs/shared/data-access/src/index.ts"],
       "@closing/shared/interfaces": ["libs/shared/interfaces/src/index.ts"],
       "@closing/shared/ui-feature": ["libs/shared/ui-feature/src/index.ts"],

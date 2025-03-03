@@ -1,1 +1,1 @@
-export * from './lib/data-access/data-access.component';
+export { TreeStore } from './lib/store/tree.store';

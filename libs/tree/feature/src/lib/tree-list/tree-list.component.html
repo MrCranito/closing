@@ -1,0 +1,98 @@
+<!-- Header with Search and Filter -->
+<div class="flex justify-between items-center p-6">
+  <div class="flex-1">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">My Trees</h2>
+  </div>
+  <div class="flex items-center gap-4">
+    <button
+      #filterBtn
+      pButton
+      type="button"
+      icon="pi pi-filter"
+      class="p-button-text p-button-rounded"
+      (click)="filterMenu.toggle($event)"
+    ></button>
+    <button
+      pButton
+      type="button"
+      icon="pi pi-plus"
+      label="New Tree"
+      (click)="addNewNodeTree()"
+      class="p-button-sm"
+    ></button>
+    <span class="p-input-icon-left">
+      <input
+        type="text"
+        pInputText
+        [(ngModel)]="searchQuery"
+        placeholder="Search trees..."
+        class="p-inputtext-sm"
+      />
+    </span>
+  </div>
+</div>
+
+<!-- Tree Node Cards Grid -->
+<div
+  class="grid grid-cols-4 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-6 pb-6"
+>
+  @for(item of filteredTreeNodes; track item.id) {
+  <div
+    (click)="selectNodeTree(item)"
+    class="flex flex-col justify-between h-full cursor-pointer p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-all duration-300 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+  >
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <div
+          class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-indigo-50 dark:bg-indigo-900/20"
+        >
+          <i
+            class="fas {{
+              item.icon
+            }} text-2xl text-indigo-500 dark:text-indigo-400"
+          ></i>
+        </div>
+        <div class="flex -space-x-2">
+          <img
+            class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800"
+            src="https://ui-avatars.com/api/?name=User1"
+            alt="User 1"
+          />
+          <img
+            class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800"
+            src="https://ui-avatars.com/api/?name=User2"
+            alt="User 2"
+          />
+          <div
+            class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-white bg-gray-100 dark:border-gray-800 dark:bg-gray-700"
+          >
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400"
+              >+3</span
+            >
+          </div>
+        </div>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        {{ item.name || 'Untitled Tree' }}
+      </h3>
+      <p class="text-gray-600 dark:text-gray-400">
+        {{ item.description || 'No description available' }}
+      </p>
+    </div>
+    <div
+      class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700"
+    >
+      <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <i class="fas fa-clock mr-2"></i>
+        <span>{{ item.updatedAt | date : 'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <i class="fas fa-folder mr-2"></i>
+        <span>{{ item.permissions.length || 0 }} nodes</span>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<p-menu #filterMenu [model]="filterMenuItems" [popup]="true"></p-menu>
