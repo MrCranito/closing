@@ -25,4 +25,6 @@ export {
   TreeStatus,
   TreePermissions,
   TreeNode,
+  NodeAction,
+  NodeWidget,
 } from './lib/tree/tree.interface';

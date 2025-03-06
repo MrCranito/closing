@@ -60,8 +60,22 @@ export interface TreeNode {
   createdBy?: User;
   updatedBy?: User;
   archivedBy?: User;
-  widgets?: Widget[];
+  widgets?: NodeWidget[];
+  actions?: NodeAction[];
   children?: TreeNode[];
+}
+
+export interface NodeWidget {
+  id: string;
+  type: string;
+  config: Record<string, any>;
+}
+
+export interface NodeAction {
+  id: string;
+  name: string;
+  type: string;
+  config: Record<string, any>;
 }
 
 export interface Widget {

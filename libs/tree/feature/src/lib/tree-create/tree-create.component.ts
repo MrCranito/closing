@@ -10,11 +10,11 @@ import {
 import { CommonModule } from '@angular/common';
 import {
   TreeNode,
-  User,
   Tree,
-  TreePermissionLevel,
   TreeStatus,
   TreeRootNode,
+  NodeAction,
+  NodeWidget,
 } from '@closing/shared/interfaces';
 import { SidebarModule } from 'primeng/sidebar';
 import * as d3 from 'd3';
@@ -34,6 +34,10 @@ import { InputIconModule } from 'primeng/inputicon';
 import { TreeStore } from '@closing/tree/data-access';
 import { v4 as uuidv4 } from 'uuid';
 import { Router } from '@angular/router';
+import { DrawerModule } from 'primeng/drawer';
+import { DividerModule } from 'primeng/divider';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 type LinkData = {
   source: d3.HierarchyPointNode<TreeNode>;
   target: d3.HierarchyPointNode<TreeNode>;
@@ -51,6 +55,9 @@ type LinkData = {
     ReactiveFormsModule,
     IconFieldModule,
     InputIconModule,
+    DrawerModule,
+    DividerModule,
+    MenuModule,
   ],
   standalone: true,
   templateUrl: './tree-create.component.html',
@@ -77,6 +84,12 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     },
   };
 
+  protected widgetItems: MenuItem[] = [
+    { label: 'Text', icon: 'pi pi-align-left' },
+    { label: 'Image', icon: 'pi pi-image' },
+    { label: 'Video', icon: 'pi pi-video' },
+  ];
+
   protected tree: Partial<Tree> = this.treeData;
   protected editedTree: Partial<Tree> = _.cloneDeep(this.tree);
   protected editMode: boolean = false;
@@ -88,10 +101,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   protected sidebarVisible: boolean = false;
   protected selectedNode: TreeNode | null = null;
   protected nodeForm: FormGroup = this.formBuilder.group({
-    name: [
-      this.editedTree.name,
-      [Validators.required, Validators.minLength(3)],
-    ],
+    name: ['', [Validators.required, Validators.minLength(3)]],
     description: [''],
   });
 
@@ -360,6 +370,13 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // Optionally recreate plus/delete buttons
     this.createPlusButton(this.highlightedNode);
     this.createDeleteButton(this.highlightedNode);
+
+    this.selectedNode = selectedNode;
+    this.nodeForm.patchValue({
+      name: selectedNode.name,
+      description: selectedNode.description || '',
+    });
+    this.sidebarVisible = true;
   }
 
   private createPlusButton(node: TreeNode): void {
@@ -494,40 +511,36 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       });
   }
 
-  addNode(parentId: string): void {
-    const parentNode = this.findNode(this.editedTree.rootNode!, parentId);
+  protected addNode(parentId: string): void {
+    if (!this.editedTree.rootNode) return;
 
+    const newNode: TreeNode = {
+      id: uuidv4(),
+      name: 'New Node',
+      description: '',
+      children: [],
+    };
+
+    const parentNode = this.findNode(this.editedTree.rootNode, parentId);
     if (parentNode) {
-      const newNode: TreeNode = {
-        id: uuidv4(),
-        name: 'New Node',
-        description: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        createdBy: this.editedTree.createdBy!,
-        updatedBy: this.editedTree.updatedBy!,
-        widgets: [],
-        children: [],
-      };
-      parentNode.children = parentNode.children || [];
+      if (!parentNode.children) {
+        parentNode.children = [];
+      }
       parentNode.children.push(newNode);
-      this.editedTree = _.cloneDeep(this.editedTree);
       this.renderTree();
     }
   }
 
-  removeNode(nodeId: string): void {
-    const parentNode = this.findParentNode(this.editedTree.rootNode!, nodeId);
-    if (parentNode) {
-      parentNode.children = parentNode?.children?.filter(
-        (child) => child.id !== nodeId
-      );
-      this.editedTree = _.cloneDeep(this.editedTree);
-      this.renderTree();
+  protected removeNode(nodeId: string): void {
+    if (!this.editedTree.rootNode) return;
 
-      // Reset highlighted node if it was deleted
-      if (this.highlightedNode?.id === nodeId) {
-        this.highlightedNode = null;
+    const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
+    if (parentNode) {
+      if (parentNode.children) {
+        parentNode.children = parentNode.children.filter(
+          (child: TreeNode) => child.id !== nodeId
+        );
+        this.renderTree();
       }
     }
   }
@@ -566,5 +579,65 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       }
     }
     return null;
+  }
+
+  protected onSubmitNodeForm(): void {
+    if (!this.selectedNode || !this.nodeForm.valid) return;
+
+    const formValue = this.nodeForm.value;
+    this.selectedNode.name = formValue.name;
+    this.selectedNode.description = formValue.description;
+    this.renderTree();
+  }
+
+  protected addWidget(widgetType: string): void {
+    if (!this.selectedNode) return;
+
+    const widget: NodeWidget = {
+      id: uuidv4(),
+      type: widgetType,
+      config: {},
+    };
+
+    if (!this.selectedNode.widgets) {
+      this.selectedNode.widgets = [];
+    }
+    this.selectedNode.widgets.push(widget);
+    this.renderTree();
+  }
+
+  protected addAction(): void {
+    if (!this.selectedNode) return;
+
+    const action: NodeAction = {
+      id: uuidv4(),
+      name: 'New Action',
+      type: 'button',
+      config: {},
+    };
+
+    if (!this.selectedNode.actions) {
+      this.selectedNode.actions = [];
+    }
+    this.selectedNode.actions.push(action);
+    this.renderTree();
+  }
+
+  protected removeAction(action: NodeAction): void {
+    if (!this.selectedNode?.actions) return;
+
+    this.selectedNode.actions = this.selectedNode.actions.filter(
+      (a: NodeAction) => a.id !== action.id
+    );
+    this.renderTree();
+  }
+
+  protected removeWidget(widget: NodeWidget): void {
+    if (!this.selectedNode?.widgets) return;
+
+    this.selectedNode.widgets = this.selectedNode.widgets.filter(
+      (w) => w.id !== widget.id
+    );
+    this.renderTree();
   }
 }
