@@ -1,61 +1,74 @@
-<div class="h-full p-4">
-  <div
-    class="h-full border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700"
-  >
-    <div class="card h-full w-full" #treeContainer></div>
+<div class="h-full p-8 py-2">
+  <div class="flex flex-col h-full">
+    <div class="flex justify-start py-4">
+      @if(!editMode) {
+      <div class="flex items-center gap-2">
+        <h3 class="text-lg font-semibold">{{ editedTree.name }}</h3>
+        <i class="pi pi-pencil cursor-pointer" (click)="editMode = true"></i>
+      </div>
+      } @else {
+      <form [formGroup]="form">
+        <div class="flex flex-col items-start gap-2">
+          <div class="flex gap-2">
+            <p-iconfield
+              iconPosition="right"
+              class="ml-auto"
+              aria-describedby="name-help"
+            >
+              <input
+                pInputText
+                type="text"
+                class="w-full p-2 border border-gray-300 rounded-md"
+                formControlName="name"
+              />
+              <p-inputicon
+                *ngIf="form.get('name')?.value"
+                styleClass="pi pi-times cursor-pointer"
+                (click)="form.get('name')?.setValue(tree.name)"
+              />
+            </p-iconfield>
+            <p-button
+              icon="pi pi-check"
+              aria-label="Save"
+              [disabled]="
+                form.get('name')?.hasError('minlength') ||
+                form.get('name')?.hasError('required')
+              "
+              (onClick)="saveTitle()"
+            />
+          </div>
+          <small
+            *ngIf="
+              form.get('name')?.hasError('minlength') ||
+              form.get('name')?.hasError('required')
+            "
+            class="text-red-500"
+            id="name-help"
+            >The tree name must be at least 3 characters long.</small
+          >
+        </div>
+      </form>
+      }
+    </div>
+    <div
+      class="h-full border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700"
+    >
+      <div class="card h-full w-full" #treeContainer></div>
+    </div>
+    <div class="flex justify-between py-4">
+      <p-button
+        outlined
+        [disabled]="isEqual || editMode"
+        label="Reset"
+        icon="pi pi-refresh"
+        (onClick)="resetTree()"
+      />
+      <p-button
+        label="Create"
+        icon="pi pi-plus"
+        [disabled]="isEqual || editMode"
+        (onClick)="createTree()"
+      />
+    </div>
   </div>
 </div>
-
-<p-sidebar
-  [(visible)]="sidebarVisible"
-  [showCloseIcon]="false"
-  styleClass="p-4 w-96"
->
-  <ng-container *ngIf="editingNode">
-    <h3 class="text-xl font-bold mb-4">Edit Node</h3>
-    <form [formGroup]="nodeForm" class="flex flex-col gap-4">
-      <div class="field">
-        <label for="name" class="block text-sm font-medium mb-1">Name</label>
-        <input
-          id="name"
-          type="text"
-          pInputText
-          formControlName="name"
-          class="w-full"
-          placeholder="Enter node name"
-        />
-      </div>
-
-      <div class="field">
-        <label for="description" class="block text-sm font-medium mb-1"
-          >Description</label
-        >
-        <textarea
-          id="description"
-          pTextarea
-          formControlName="description"
-          class="w-full"
-          rows="3"
-          placeholder="Enter node description"
-        ></textarea>
-      </div>
-
-      <div class="flex justify-end gap-2 mt-4">
-        <button
-          pButton
-          type="button"
-          label="Cancel"
-          class="p-button-text"
-          (click)="sidebarVisible = false"
-        ></button>
-        <button
-          pButton
-          type="submit"
-          label="Save"
-          [disabled]="!nodeForm.valid"
-          (click)="saveNodeDetails()"
-        ></button>
-      </div>
-    </form>
-  </ng-container>
-</p-sidebar>

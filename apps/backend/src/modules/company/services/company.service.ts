@@ -73,7 +73,7 @@ export class CompanyService {
 
     // Update owner's company association
     owner.company = savedCompany;
-    owner.role = UserRole.OWNER;
+    owner.role = UserRole.Admin;
     await this.userRepository.save(owner);
 
     return savedCompany;
@@ -105,7 +105,7 @@ export class CompanyService {
     }
 
     user.company = company;
-    user.role = addUserDto.role || UserRole.USER;
+    user.role = addUserDto.role || UserRole.Viewer;
     await this.userRepository.save(user);
 
     await this.companyRepository.save(company);
@@ -133,12 +133,12 @@ export class CompanyService {
       throw new NotFoundException('User not found in company');
     }
 
-    if (user.role === UserRole.OWNER) {
+    if (user.role === UserRole.Admin) {
       throw new BadRequestException('Cannot remove company owner');
     }
 
     user.company = null;
-    user.role = UserRole.USER;
+    user.role = UserRole.Viewer;
     await this.userRepository.save(user);
 
     await this.companyRepository.save(company);

@@ -1,4 +1,5 @@
 export enum TreePermissionLevel {
+  FULL = 'FULL',
   VIEW = 'VIEW',
   EDIT = 'EDIT',
   DELETE = 'DELETE',

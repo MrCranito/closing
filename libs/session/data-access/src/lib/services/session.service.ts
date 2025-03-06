@@ -4,11 +4,6 @@ import { Session } from '../interfaces/session.interface';
 import { Observable } from 'rxjs';
 import { ENVIRONMENT, Environment } from '@closing/shared/interfaces';
 
-export interface SessionPaginationResponse {
-  items: Session[];
-  total: number;
-}
-
 @Injectable({
   providedIn: 'root',
 })
@@ -21,8 +16,8 @@ export class SessionService {
     size: number,
     sorts: string,
     filters: string
-  ): Observable<SessionPaginationResponse> {
-    return this.http.get<SessionPaginationResponse>(
+  ): Observable<Session[]> {
+    return this.http.get<Session[]>(
       `${this.env.apiUrl}/api/sessions?page=${page}&size=${size}&sorts=${sorts}&filters=${filters}`
     );
   }

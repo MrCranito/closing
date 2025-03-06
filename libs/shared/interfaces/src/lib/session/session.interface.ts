@@ -1,14 +1,14 @@
-import { User } from '../user/user.interface';
-import { TreeNode } from '../tree-node/tree-node.interface';
+import { Customer } from '../customer/customer.interface';
 
 export interface Session {
   id: string;
   name: string;
   description?: string;
-  treeNode: TreeNode;
-  participants: User[];
+  customer: Customer;
+  tree_name: string;
+  tree_id: string;
   createdAt: Date;
-  lastModified: Date;
+  updatedAt: Date;
   status: 'active' | 'completed' | 'scheduled';
   duration?: number; // in minutes
   notes?: string;

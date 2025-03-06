@@ -1,6 +1,21 @@
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  ViewChild,
+  inject,
+  OnInit,
+  AfterViewInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TreeNode, User } from '@closing/shared/interfaces';
+import {
+  TreeNode,
+  User,
+  Tree,
+  TreePermissionLevel,
+  TreeStatus,
+  TreeRootNode,
+} from '@closing/shared/interfaces';
 import { SidebarModule } from 'primeng/sidebar';
 import * as d3 from 'd3';
 import { ButtonModule } from 'primeng/button';
@@ -13,7 +28,12 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-
+import * as _ from 'lodash';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { TreeStore } from '@closing/tree/data-access';
+import { v4 as uuidv4 } from 'uuid';
+import { Router } from '@angular/router';
 type LinkData = {
   source: d3.HierarchyPointNode<TreeNode>;
   target: d3.HierarchyPointNode<TreeNode>;
@@ -29,6 +49,8 @@ type LinkData = {
     InputTextModule,
     Textarea,
     ReactiveFormsModule,
+    IconFieldModule,
+    InputIconModule,
   ],
   standalone: true,
   templateUrl: './tree-create.component.html',
@@ -36,32 +58,42 @@ type LinkData = {
     class: 'h-full w-full',
   },
 })
-export class TreeCreateComponent {
+export class TreeCreateComponent implements OnInit, AfterViewInit {
+  private store = inject(TreeStore);
+  private formBuilder: FormBuilder = inject(FormBuilder);
+  private router: Router = inject(Router);
   @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
 
-  sidebarVisible: boolean = false;
-  editingNode: TreeNode | null = null;
-  nodeForm: FormGroup;
-
-  private defaultUser: User = {
-    id: '1',
-    lastname: 'Doe',
-    firstname: 'John',
-    email: 'john.doe@example.com',
-    isEmailVerified: true,
+  private treeData: Partial<Tree> = {
+    name: 'Tree Node Default',
+    description: 'A default tree node structure',
+    icon: 'fa-project-diagram',
+    status: TreeStatus.ACTIVE,
+    rootNode: {
+      id: uuidv4(),
+      name: 'Root Node',
+      description: 'A default root node structure',
+      children: [],
+    },
   };
 
-  private treeData: TreeNode = {
-    id: 'root',
-    name: 'Root Node',
-    description: 'Root node of the tree',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: this.defaultUser,
-    updatedBy: this.defaultUser,
-    widgets: [],
-    children: [],
-  };
+  protected tree: Partial<Tree> = this.treeData;
+  protected editedTree: Partial<Tree> = _.cloneDeep(this.tree);
+  protected editMode: boolean = false;
+
+  protected get isEqual(): boolean {
+    return _.isEqual(this.editedTree, this.tree);
+  }
+
+  protected sidebarVisible: boolean = false;
+  protected selectedNode: TreeNode | null = null;
+  protected nodeForm: FormGroup = this.formBuilder.group({
+    name: [
+      this.editedTree.name,
+      [Validators.required, Validators.minLength(3)],
+    ],
+    description: [''],
+  });
 
   private svg: any;
   private container: any;
@@ -73,10 +105,16 @@ export class TreeCreateComponent {
   private button: any;
   private deleteButton: any;
 
-  constructor(private fb: FormBuilder) {
-    this.nodeForm = this.fb.group({
-      name: ['', Validators.required],
-      description: [''],
+  protected form: FormGroup = this.formBuilder.group({
+    name: [
+      this.editedTree.name,
+      [Validators.required, Validators.minLength(3)],
+    ],
+  });
+
+  ngOnInit(): void {
+    this.form.get('name')?.valueChanges.subscribe(() => {
+      this.form.markAllAsTouched();
     });
   }
 
@@ -84,6 +122,21 @@ export class TreeCreateComponent {
     this.setDimensions();
     this.initializeSvg();
     this.initializeTree();
+  }
+
+  protected resetTree(): void {
+    this.editedTree = _.cloneDeep(this.tree);
+    this.renderTree();
+  }
+
+  protected createTree(): void {
+    this.store.createTree(this.editedTree);
+    this.router.navigate(['/tree']);
+  }
+
+  protected saveTitle(): void {
+    this.editedTree.name = this.form.get('name')?.value;
+    this.editMode = false;
   }
 
   @HostListener('window:resize', ['$event'])
@@ -126,12 +179,17 @@ export class TreeCreateComponent {
   }
 
   private renderTree(): void {
+    // Adjust nodeSize to account for dynamic text size
     const treeLayout = d3
       .tree<TreeNode>()
-      .nodeSize([150, 100])
-      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
+      .nodeSize([150, 100]) // Fixed width for node, but dynamic height based on content
+      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // Increase separation between nodes    const root = d3.hierarchy(this.treeData, d => d.children);
 
-    const root = d3.hierarchy(this.treeData, (d) => d.children);
+    const root = d3.hierarchy<TreeNode>(
+      this.editedTree.rootNode as unknown as TreeNode,
+      (d) => d.children || []
+    );
+
     treeLayout(root);
 
     const nodes = root.descendants();
@@ -166,41 +224,103 @@ export class TreeCreateComponent {
         this.onNodeClick(d.data)
       );
 
-    // Append rectangles
-    nodeGroup
-      .append('rect')
-      .attr('rx', 5)
-      .attr('ry', 5)
-      .style('fill', 'white')
-      .style('stroke', 'black');
+    // Create foreignObject to embed HTML
+    const foreignObject = nodeGroup
+      .append('foreignObject')
+      .attr('width', 200)
+      .attr('height', 80)
+      .attr('x', -100)
+      .attr('y', -40);
 
-    // Append text
-    const text = nodeGroup
-      .append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', 5)
-      .style('font-size', '14px')
-      .text((d: d3.HierarchyPointNode<TreeNode>) => d.data.name);
+    // Create HTML content
+    foreignObject
+      .append('xhtml:div')
+      .attr('class', 'tree-node')
+      .style('width', '100%')
+      .style('height', '100%')
+      .style('display', 'flex')
+      .style('flex-direction', 'column')
+      .style('align-items', 'center')
+      .style('justify-content', 'center')
+      .style('background', 'white')
+      .style('border-radius', '8px')
+      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+      .style('transition', 'all 0.3s ease')
+      .style('cursor', 'pointer')
+      .style('border', '1px solid #e5e7eb')
+      .each(function (this: HTMLElement, d: d3.HierarchyPointNode<TreeNode>) {
+        const div = d3.select(this);
 
-    // Update rectangle sizes
+        // Add icon
+        div
+          .append('i')
+          .attr('class', 'pi pi-folder')
+          .style('font-size', '24px')
+          .style('color', '#10b981')
+          .style('margin-bottom', '4px');
+
+        // Add name
+        div
+          .append('div')
+          .style('font-size', '14px')
+          .style('font-weight', '500')
+          .style('color', '#1f2937')
+          .style('text-align', 'center')
+          .style('max-width', '180px')
+          .style('overflow', 'hidden')
+          .style('text-overflow', 'ellipsis')
+          .style('white-space', 'nowrap')
+          .text(d.data.name);
+
+        // Add hover effect
+        div
+          .on('mouseover', function () {
+            d3.select(this)
+              .style('transform', 'scale(1.05)')
+              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
+              .style('border-color', '#10b981')
+              .style('border-width', '2px')
+              .style('background', '#f8fafc');
+          })
+          .on('mouseout', function () {
+            const node = d3.select(this);
+            // Only reset if not selected
+            if (!node.classed('selected')) {
+              node
+                .style('transform', 'scale(1)')
+                .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+                .style('border-color', '#e5e7eb')
+                .style('border-width', '1px')
+                .style('background', 'white');
+            }
+          })
+          .on('click', function () {
+            const node = d3.select(this);
+            // Add selected class and apply selected styles
+            node
+              .classed('selected', true)
+              .style('transform', 'scale(1)')
+              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
+              .style('border-color', '#10b981')
+              .style('border-width', '2px')
+              .style('background', '#f8fafc');
+          });
+      });
+
+    // Update rectangle size based on content
     nodeGroup.each(
       (_: d3.HierarchyPointNode<TreeNode>, i: number, nodes: SVGGElement[]) => {
         const group = d3.select(nodes[i]);
-        const textElement = group.select('text').node() as SVGTextElement;
-        if (!textElement) return;
-
-        const bbox = textElement.getBBox();
-        const padding = 10;
-
-        group
-          .select('rect')
-          .attr('x', -bbox.width / 2 - padding)
-          .attr('y', -bbox.height / 2 - padding / 2)
-          .attr('width', bbox.width + padding * 2)
-          .attr('height', bbox.height + padding);
+        const foreignObject = group.select('foreignObject');
+        foreignObject
+          .attr('width', 200)
+          .attr('height', 80)
+          .attr('x', -100)
+          .attr('y', -40);
       }
     );
 
+    // Append plus button next to clicked node if available
     if (this.highlightedNode) {
       this.createPlusButton(this.highlightedNode);
       this.createDeleteButton(this.highlightedNode);
@@ -212,7 +332,8 @@ export class TreeCreateComponent {
     const parentY = d.source.y;
     const childX = d.target.x;
     const childY = d.target.y;
-    const midY = (parentY + childY) / 2;
+
+    const midY = (parentY + childY) / 2; // Intermediate join point
 
     return `
       M${parentX},${parentY}
@@ -223,157 +344,226 @@ export class TreeCreateComponent {
   }
 
   private onNodeClick(selectedNode: TreeNode): void {
+    // Remove highlight from all nodes (reset to white)
     this.container.selectAll('.node rect').style('fill', 'white');
 
+    // Find and highlight the selected node
     this.container
       .selectAll('.node')
       .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode)
       .select('rect')
-      .style('fill', '#34d399');
+      .style('fill', '#34d399'); // Apply green color
 
+    // Store the highlighted node
     this.highlightedNode = selectedNode;
-    this.openEditPanel(selectedNode);
+
+    // Optionally recreate plus/delete buttons
     this.createPlusButton(this.highlightedNode);
     this.createDeleteButton(this.highlightedNode);
   }
 
   private createPlusButton(node: TreeNode): void {
+    const nodeGroup = this.container
+      .selectAll('.node')
+      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
+
+    // Remove existing plus button if any
     if (this.button) {
       this.button.remove();
     }
 
+    // Create new plus button
+    this.button = nodeGroup
+      .append('g')
+      .attr('class', 'plus-button')
+      .attr('transform', 'translate(140, -30)') // Increased distance from node and between buttons
+      .on('click', () => this.addNode(node?.id || ''));
+
+    // Create foreignObject for HTML content
+    this.button
+      .append('foreignObject')
+      .attr('width', 36)
+      .attr('height', 36)
+      .attr('x', -18)
+      .attr('y', -18)
+      .append('xhtml:div')
+      .style('width', '100%')
+      .style('height', '100%')
+      .style('display', 'flex')
+      .style('align-items', 'center')
+      .style('justify-content', 'center')
+      .style('background', 'white')
+      .style('border-radius', '50%')
+      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+      .style('transition', 'all 0.3s ease')
+      .style('cursor', 'pointer')
+      .style('border', '2px solid #e5e7eb')
+      .each(function (this: HTMLElement) {
+        const div = d3.select(this);
+
+        div
+          .append('i')
+          .attr('class', 'pi pi-plus')
+          .style('font-size', '18px')
+          .style('color', '#10b981');
+
+        // Add hover effect
+        div
+          .on('mouseover', function () {
+            d3.select(this)
+              .style('transform', 'scale(1.05)')
+              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
+              .style('border-color', '#10b981')
+              .style('background', '#f3f4f6')
+              .style('border-width', '2px');
+          })
+          .on('mouseout', function () {
+            d3.select(this)
+              .style('transform', 'scale(1)')
+              .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+              .style('border-color', '#e5e7eb')
+              .style('background', 'white')
+              .style('border-width', '2px');
+          });
+      });
+  }
+
+  private createDeleteButton(node: TreeNode): void {
     const nodeGroup = this.container
       .selectAll('.node')
       .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
 
-    this.button = nodeGroup
-      .append('g')
-      .attr('class', 'plus-button')
-      .attr('transform', 'translate(80, -20)')
-      .on('click', () => this.addNode(node.id));
-
-    this.button
-      .append('circle')
-      .attr('r', 15)
-      .style('fill', 'white')
-      .style('stroke', 'black')
-      .style('cursor', 'pointer');
-
-    this.button
-      .append('text')
-      .attr('x', -5)
-      .attr('y', 5)
-      .style('fill', 'black')
-      .text('+');
-  }
-
-  private createDeleteButton(node: TreeNode): void {
+    // Remove existing delete button if any
     if (this.deleteButton) {
       this.deleteButton.remove();
     }
 
-    const nodeGroup = this.container
-      .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
-
+    // Create new delete button
     this.deleteButton = nodeGroup
       .append('g')
       .attr('class', 'delete-button')
-      .attr('transform', 'translate(80, 20)')
-      .on('click', () => this.removeNode(node.id));
+      .attr('transform', 'translate(140, 30)') // Increased distance from node and between buttons
+      .on('click', () => this.removeNode(node?.id || ''));
 
+    // Create foreignObject for HTML content
     this.deleteButton
-      .append('circle')
-      .attr('r', 15)
-      .style('fill', 'red')
-      .style('cursor', 'pointer');
+      .append('foreignObject')
+      .attr('width', 36)
+      .attr('height', 36)
+      .attr('x', -18)
+      .attr('y', -18)
+      .append('xhtml:div')
+      .style('width', '100%')
+      .style('height', '100%')
+      .style('display', 'flex')
+      .style('align-items', 'center')
+      .style('justify-content', 'center')
+      .style('background', 'white')
+      .style('border-radius', '50%')
+      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+      .style('transition', 'all 0.3s ease')
+      .style('cursor', 'pointer')
+      .style('border', '2px solid #e5e7eb')
+      .each(function (this: HTMLElement) {
+        const div = d3.select(this);
 
-    this.deleteButton
-      .append('text')
-      .attr('x', -5)
-      .attr('y', 5)
-      .style('fill', 'white')
-      .text('-');
+        div
+          .append('i')
+          .attr('class', 'pi pi-trash')
+          .style('font-size', '18px')
+          .style('color', '#10b981');
+
+        // Add hover effect
+        div
+          .on('mouseover', function () {
+            d3.select(this)
+              .style('transform', 'scale(1.05)')
+              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
+              .style('border-color', '#10b981')
+              .style('background', '#f3f4f6')
+              .style('border-width', '2px');
+          })
+          .on('mouseout', function () {
+            d3.select(this)
+              .style('transform', 'scale(1)')
+              .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+              .style('border-color', '#e5e7eb')
+              .style('background', 'white')
+              .style('border-width', '2px');
+          });
+      });
   }
 
-  private openEditPanel(node: TreeNode): void {
-    this.editingNode = node;
-    this.nodeForm.patchValue({
-      name: node.name,
-      description: node.description || '',
-    });
-    this.sidebarVisible = true;
-  }
+  addNode(parentId: string): void {
+    const parentNode = this.findNode(this.editedTree.rootNode!, parentId);
 
-  saveNodeDetails(): void {
-    if (this.editingNode && this.nodeForm.valid) {
-      const formValue = this.nodeForm.value;
-      this.editingNode.name = formValue.name;
-      this.editingNode.description = formValue.description;
-      this.editingNode.updatedAt = new Date();
-      this.editingNode.updatedBy = this.defaultUser;
-      this.renderTree();
-      this.sidebarVisible = false;
-      this.editingNode = null;
-    }
-  }
-
-  private addNode(parentId: string): void {
-    const parentNode = this.findNode(this.treeData, parentId);
     if (parentNode) {
       const newNode: TreeNode = {
-        id: `node-${this.nodeIdCounter++}`,
+        id: uuidv4(),
         name: 'New Node',
         description: '',
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdBy: this.defaultUser,
-        updatedBy: this.defaultUser,
+        createdBy: this.editedTree.createdBy!,
+        updatedBy: this.editedTree.updatedBy!,
         widgets: [],
         children: [],
       };
       parentNode.children = parentNode.children || [];
       parentNode.children.push(newNode);
+      this.editedTree = _.cloneDeep(this.editedTree);
       this.renderTree();
-      this.openEditPanel(newNode);
     }
   }
 
-  private removeNode(nodeId: string): void {
-    const parentNode = this.findParentNode(this.treeData, nodeId);
+  removeNode(nodeId: string): void {
+    const parentNode = this.findParentNode(this.editedTree.rootNode!, nodeId);
     if (parentNode) {
-      parentNode.children = parentNode.children.filter(
+      parentNode.children = parentNode?.children?.filter(
         (child) => child.id !== nodeId
       );
+      this.editedTree = _.cloneDeep(this.editedTree);
       this.renderTree();
 
+      // Reset highlighted node if it was deleted
       if (this.highlightedNode?.id === nodeId) {
         this.highlightedNode = null;
-        this.sidebarVisible = false;
       }
     }
   }
 
-  private findNode(node: TreeNode, id: string): TreeNode | null {
-    if (node.id === id) return node;
-    if (!node.children) return null;
+  private findNode(node: TreeRootNode | TreeNode, id: string): TreeNode | null {
+    if (node.id === id) {
+      return node as TreeNode;
+    }
 
-    for (const child of node.children) {
-      const found = this.findNode(child, id);
-      if (found) return found;
+    if ('children' in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        const found = this.findNode(child, id);
+        if (found) return found;
+      }
     }
     return null;
   }
 
-  private findParentNode(node: TreeNode, id: string): TreeNode | null {
-    if (!node.children) return null;
+  private findParentNode(
+    node: Tree | TreeRootNode | TreeNode,
+    id: string
+  ): TreeNode | null {
+    // Handle Tree type
+    if ('rootNode' in node && !('children' in node)) {
+      return this.findParentNode(node.rootNode, id);
+    }
 
-    for (const child of node.children) {
-      if (child.id === id) {
-        return node;
+    // Handle TreeRootNode and TreeNode types
+    if ('children' in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (child.id === id) {
+          return node as TreeNode;
+        }
+        const found = this.findParentNode(child, id);
+        if (found) return found;
       }
-      const found = this.findParentNode(child, id);
-      if (found) return found;
     }
     return null;
   }

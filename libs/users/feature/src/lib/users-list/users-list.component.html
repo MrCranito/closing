@@ -1,4 +1,4 @@
-<div class="flex px-6 pb-6">
+<div class="flex p-4 pb-6">
   <p-table
     #dt
     class="w-full"
@@ -12,27 +12,51 @@
     [totalRecords]="total()"
     (onLazyLoad)="onLazyLoad($event)"
     [lazy]="true"
+    [size]="'small'"
     dataKey="id"
   >
     <ng-template #caption>
-      <div class="flex">
-        <p-iconfield iconPosition="left" class="ml-auto">
+      <div class="flex py-2 justify-between">
+        <div class="flex items-center">
           <form [formGroup]="form">
-            <input
-              pInputText
-              type="text"
-              class="p-inputtext-sm"
-              formControlName="search"
-              placeholder="Search..."
-            />
+            <p-iconfield>
+              <p-inputicon styleClass="pi pi-search" />
+              <input
+                pInputText
+                type="text"
+                class="p-inputtext-sm"
+                formControlName="search"
+                placeholder="Search"
+              />
+            </p-iconfield>
           </form>
-        </p-iconfield>
+        </div>
+
+        <div class="flex">
+          <button
+            outlined
+            pButton
+            type="button"
+            icon="pi pi-file-import"
+            label="Import"
+            (click)="importUsers()"
+            class="p-button-sm mr-3"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-user-plus"
+            label="Add user"
+            (click)="addUser()"
+            class="p-button-sm mr-3"
+          ></button>
+        </div>
       </div>
     </ng-template>
     <ng-template #header>
       <tr>
         @for (column of columns; track column.field) {
-        <th style="min-width: 15rem">
+        <th>
           <div class="flex items-center">
             {{ column.header }}
             @if (column.sortable) {
@@ -47,9 +71,16 @@
     </ng-template>
     <ng-template #body let-session>
       <tr>
-        @for (column of columns; track column.field) {
+        @for (column of columns; track column.field) { @if (column.template) {
+        <td>
+          <ng-template
+            [ngTemplateOutlet]="column.template"
+            [ngTemplateOutletContext]="{ $implicit: session }"
+          ></ng-template>
+        </td>
+        } @else {
         <td>{{ session[column.field] }}</td>
-        }
+        } }
       </tr>
     </ng-template>
     <ng-template #emptymessage>
@@ -59,3 +90,104 @@
     </ng-template>
   </p-table>
 </div>
+
+<p-dialog
+  header="Create user"
+  [visible]="showAddUserDialog"
+  [modal]="true"
+  [style]="{ width: '25rem' }"
+  [draggable]="false"
+>
+  <form [formGroup]="form" (ngSubmit)="saveUser()">
+    <div class="flex items-center gap-4 mb-2">
+      <label for="email" class="font-semibold w-24">Email</label>
+      <input
+        pInputText
+        id="email"
+        class="flex-auto"
+        formControlName="email"
+        autocomplete="off"
+      />
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <label for="lastname" class="font-semibold w-24">Last name</label>
+      <input
+        pInputText
+        id="lastname"
+        class="flex-auto"
+        formControlName="lastname"
+        autocomplete="off"
+      />
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <label for="firstname" class="font-semibold w-24">First name</label>
+      <input
+        pInputText
+        id="firstname"
+        class="flex-auto"
+        autocomplete="off"
+        formControlName="firstname"
+      />
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <label for="role" class="font-semibold w-24">Role</label>
+      <p-dropdown
+        id="role"
+        [options]="roles"
+        formControlName="role"
+        class="w-full"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+      ></p-dropdown>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      [text]="true"
+      severity="secondary"
+      (onClick)="showAddUserDialog = false"
+    />
+    <p-button label="Save" type="submit" />
+  </ng-template>
+</p-dialog>
+
+<ng-template #roleTemplate let-user>
+  @switch (user.role) { @case (rolesEnum.Admin) {
+  <p-tag
+    [pTooltip]="'Administrator can manage your company'"
+    [positionTop]="true"
+    icon="pi pi-lock"
+    severity="contrast"
+    value="Administrator"
+  />
+  } @case (rolesEnum.Moderator) {
+  <p-tag
+    [pTooltip]="'Moderator can manage users and teams'"
+    icon="pi pi-pencil"
+    severity="info"
+    value="Moderator"
+  />
+  } @case (rolesEnum.Viewer) {
+  <p-tag
+    [pTooltip]="'Viewer can only see the data'"
+    icon="pi pi-eye"
+    severity="secondary"
+    value="Viewer"
+  />
+  } }
+</ng-template>
+
+<ng-template #teamTemplate let-user>
+  @for (team of user.teams; track team.id) {
+  <p-avatar
+    class="mr-2"
+    [pTooltip]="team.name"
+    label="ET"
+    size="normal"
+    shape="circle"
+  />
+  }
+</ng-template>

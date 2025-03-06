@@ -6,4 +6,5 @@ export interface Column {
   sortable?: boolean;
   filterable?: boolean;
   template?: TemplateRef<any>;
+  subField?: string;
 }

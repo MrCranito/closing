@@ -16,8 +16,11 @@ export class TreePermissions {
   @Prop({ required: true })
   grandedAt: Date;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  grandedBy: User;
+  @Prop({ required: true })
+  grandedBy: string;
+
+  @Prop({ required: true })
+  createdBy: string;
 }
 
 @Schema({ timestamps: true })
@@ -49,14 +52,14 @@ export class TreeNode {
   @Prop({ type: Date })
   archivedAt?: Date;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  createdBy: User;
+  @Prop({ required: true })
+  createdBy: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  updatedBy: User;
+  @Prop({ required: true })
+  updatedBy: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  archivedBy?: User;
+  @Prop()
+  archivedBy?: string;
 
   @Prop({ type: [Widget] })
   widgets: Widget[];
@@ -82,20 +85,26 @@ export class Tree extends Document {
   @Prop({ type: Date })
   archivedAt?: Date;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  createdBy: User;
+  @Prop({ required: true })
+  createdBy: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  updatedBy: User;
+  @Prop({ required: true })
+  updatedBy: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  archivedBy?: User;
+  @Prop()
+  archivedBy?: string;
 
   @Prop()
   icon?: string;
 
   @Prop({ type: TreeNode, required: true })
   rootNode: TreeNode;
+
+  @Prop({ required: true })
+  createdAt: Date;
+
+  @Prop({ required: true })
+  updatedAt: Date;
 }
 
 export const TreeSchema = SchemaFactory.createForClass(Tree);

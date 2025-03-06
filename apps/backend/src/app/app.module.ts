@@ -1,33 +1,37 @@
 import { Module } from '@nestjs/common';
 import { UsersModule } from '../modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import appConfig from './config/app.config';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CompanyModule } from '../modules/company/company.module';
 import { TreeModule } from '../modules/tree/tree.module';
+import { SessionsModule } from '../modules/sessions/sessions.module';
+import { CustomersModule } from '../modules/customers/customer.module';
+const typeOrmModuleConfig: TypeOrmModuleOptions = {
+  type: 'postgres',
+  host: process.env.POSTGRES_HOST || 'api_closing_pg',
+  port: parseInt(process.env.POSTGRES_PORT || '5432'),
+  database: process.env.POSTGRES_DATABASE_NAME || 'postgres',
+  username: process.env.POSTGRES_USERNAME || 'admin',
+  password: process.env.POSTGRES_PASSWORD || 'admin',
+  entities:
+    process.env.NODE_ENV === 'build'
+      ? ['dist/**/*.entity.js']
+      : [__dirname + '/src/**/*.entity.ts'],
+  migrations:
+    process.env.NODE_ENV === 'build'
+      ? ['dist/apps/backend/src/migrations/*.js']
+      : [__dirname + '/src/migrations/*.ts'],
+  synchronize: false,
+  migrationsRun: true,
+};
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.POSTGRES_HOST || 'api_closing_pg',
-      port: parseInt(process.env.POSTGRES_PORT || '5432'),
-      database: process.env.POSTGRES_DATABASE_NAME || 'postgres',
-      username: process.env.POSTGRES_USERNAME || 'admin',
-      password: process.env.POSTGRES_PASSWORD || 'admin',
-      entities:
-        process.env.NODE_ENV === 'build'
-          ? ['dist/**/*.entity.js']
-          : [__dirname + '/src/**/*.entity.ts'],
-      migrations:
-        process.env.NODE_ENV === 'build'
-          ? ['dist/apps/backend/src/migrations/*.js']
-          : [__dirname + '/src/migrations/*.ts'],
-      synchronize: false,
-      migrationsRun: true,
-    }),
+    TypeOrmModule.forRoot(typeOrmModuleConfig),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -47,12 +51,10 @@ import { TreeModule } from '../modules/tree/tree.module';
     AuthModule,
     CompanyModule,
     TreeModule,
+    SessionsModule,
+    CustomersModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {
-  constructor() {
-    console.log(process.env.NODE_ENV);
-  }
-}
+export class AppModule {}

@@ -2,7 +2,6 @@
   "name": "@closing/source",
   "version": "0.0.0",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "start": "nx serve backend",
     "build": "nx build backend",
@@ -12,7 +11,8 @@
     "migration:generate": "npm run build && typeorm-ts-node-commonjs migration:generate -d ./apps/backend/typeorm.config.js",
     "migration:create": "npm run build && typeorm-ts-node-commonjs migration:create -d ./apps/backend/typeorm.config.js",
     "migration:run": "npm run build && typeorm-ts-node-commonjs migration:run -d ./apps/backend/typeorm.config.js",
-    "migration:revert": "npm run build && typeorm-ts-node-commonjs migration:revert -d ./apps/backend/typeorm.config.js"
+    "migration:revert": "npm run build && typeorm-ts-node-commonjs migration:revert -d ./apps/backend/typeorm.config.js",
+    "migration:revert:all": "npm run build && typeorm-ts-node-commonjs migration:revert -d ./apps/backend/typeorm.config.js --all"
   },
   "private": true,
   "devDependencies": {
@@ -41,6 +41,7 @@
     "@swc/helpers": "~0.5.11",
     "@types/d3": "^7.4.3",
     "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.17.16",
     "@types/node": "^18.16.9",
     "@typescript-eslint/utils": "^8.19.0",
     "angular-eslint": "^19.0.2",
@@ -90,6 +91,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "d3": "^7.9.0",
+    "lodash": "^4.17.21",
     "mongoose": "^8.11.0",
     "nodemailer": "^6.10.0",
     "passport": "^0.7.0",

@@ -35,6 +35,17 @@ import { Crud, CrudController } from '@nestjsx/crud';
 export class TreeController {
   constructor(private readonly service: TreeService) {}
 
+  @Get()
+  async getMany(@Request() req): Promise<Tree[]> {
+    return this.service.getMany(req, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getOne(@Request() req): Promise<Tree> {
+    return this.service.getOne(req, req.user);
+  }
+
   @Post()
   async createOne(
     @Body() createTreeDto: Partial<Tree>,

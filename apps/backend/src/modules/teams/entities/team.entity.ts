@@ -42,6 +42,5 @@ export class Team {
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  @UpdateDateColumn()
   updatedAt: Date;
 }

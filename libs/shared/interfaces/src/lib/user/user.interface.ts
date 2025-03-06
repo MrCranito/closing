@@ -7,8 +7,8 @@ export interface User {
   isEmailVerified: boolean;
 }
 
-export enum UserRole {
-  SuperAdmin = 'SuperAdmin',
-  Admin = 'Admin',
-  Basic = 'Basic',
+export enum UserRoleEnum {
+  Admin = 'admin',
+  Moderator = 'moderator',
+  Viewer = 'viewer',
 }

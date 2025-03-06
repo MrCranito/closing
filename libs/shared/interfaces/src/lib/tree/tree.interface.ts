@@ -2,16 +2,16 @@ import { TemplateRef } from '@angular/core';
 import { User } from '../user/user.interface';
 
 export interface Tree {
-  id: string;
+  _id?: string;
   name: string;
   description?: string;
   status: TreeStatus;
-  permissions: TreePermissions[];
-  createdAt: Date;
-  updatedAt: Date;
+  permissions?: TreePermissions[];
+  createdAt?: Date;
+  updatedAt?: Date;
   archivedAt?: Date;
-  createdBy: User;
-  updatedBy: User;
+  createdBy?: User;
+  updatedBy?: User;
   archivedBy?: User;
   icon?: string;
   rootNode: TreeRootNode;
@@ -38,30 +38,30 @@ export enum TreeStatus {
 }
 
 export interface TreeRootNode {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   archivedAt?: Date;
-  createdBy: User;
-  updatedBy: User;
+  createdBy?: User;
+  updatedBy?: User;
   archivedBy?: User;
-  children: TreeNode[];
+  children?: TreeNode[];
 }
 
 export interface TreeNode {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   archivedAt?: Date;
-  createdBy: User;
-  updatedBy: User;
+  createdBy?: User;
+  updatedBy?: User;
   archivedBy?: User;
-  widgets: Widget[];
-  children: TreeNode[];
+  widgets?: Widget[];
+  children?: TreeNode[];
 }
 
 export interface Widget {

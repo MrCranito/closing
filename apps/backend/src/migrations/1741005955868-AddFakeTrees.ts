@@ -36,6 +36,7 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
           name: 'Project Management Tree',
           description: 'Tree for managing project tasks and milestones',
           status: TreeStatus.ACTIVE,
+          icon: 'pi pi-sitemap',
           createdBy: userId,
           updatedBy: userId,
           permissions: [
@@ -45,6 +46,9 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
               level: TreePermissionLevel.EDIT,
               grandedAt: new Date(),
               grandedBy: userId,
+              createdBy: userId,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           ],
           rootNode: {
@@ -56,11 +60,14 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
             widgets: [],
             children: [],
           },
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           name: 'Documentation Tree',
           description: 'Tree for organizing project documentation',
           status: TreeStatus.ACTIVE,
+          icon: 'pi pi-file',
           createdBy: userId,
           updatedBy: userId,
           permissions: [
@@ -70,6 +77,7 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
               level: TreePermissionLevel.EDIT,
               grandedAt: new Date(),
               grandedBy: userId,
+              createdBy: userId,
             },
           ],
           rootNode: {
@@ -81,11 +89,14 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
             widgets: [],
             children: [],
           },
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         {
           name: 'Development Tree',
           description: 'Tree for tracking development progress',
           status: TreeStatus.ACTIVE,
+          icon: 'pi pi-code',
           createdBy: userId,
           updatedBy: userId,
           permissions: [
@@ -95,6 +106,9 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
               level: TreePermissionLevel.EDIT,
               grandedAt: new Date(),
               grandedBy: userId,
+              createdBy: userId,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
           ],
           rootNode: {
@@ -106,6 +120,8 @@ export class AddFakeTrees1741005955868 implements MigrationInterface {
             widgets: [],
             children: [],
           },
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
 

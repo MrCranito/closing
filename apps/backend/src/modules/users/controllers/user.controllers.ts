@@ -1,57 +1,34 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Request } from '@nestjs/common';
 import { UsersService } from './../services/user.service';
 import { User } from '../entities/user.entity';
-import { DeleteResult } from 'typeorm';
-import { CreateUserDto, UpdateUserDto } from '../dto/user.dto';
-import { Crud, CrudController, CrudRequest } from '@nestjsx/crud';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { UseGuards } from '@nestjs/common';
 
-@Crud({
-  model: {
-    type: User,
-  },
-  query: {
-    alwaysPaginate: true,
-    maxLimit: 100,
-    sort: [
-      {
-        field: 'createdAt',
-        order: 'DESC',
-      },
-    ],
-    filter: {
-      email: { $ne: null },
-    },
-  },
-})
 @Controller('users')
-export class UserController implements CrudController<User> {
+export class UserController {
   constructor(public service: UsersService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getMany(@Request() req): Promise<User[]> {
+    return this.service.getMany(req, req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post()
-  createOne(
-    @Body() body: CreateUserDto,
-    @Req() req: CrudRequest
-  ): Promise<User> {
-    return this.service.createOne(req, body);
+  async createOne(@Request() req): Promise<User> {
+    return this.service.createOne(req.user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  update(@Param() params: any, @Body() body: UpdateUserDto): Promise<User> {
-    return this.service.updateOne(params.id, body);
+  async updateOne(@Request() req): Promise<User> {
+    return this.service.updateOne(req.user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param() params: any): Promise<void> {
-    return this.service.deleteOne(params.id);
+  async deleteOne(@Request() req): Promise<User> {
+    return this.service.deleteOne(req.user);
   }
 }

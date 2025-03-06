@@ -17,16 +17,18 @@ export class AddFakeUser1741005955866 implements MigrationInterface {
         firstname,
         lastname,
         company_id,
+        is_email_verified,
         created_at,
         updated_at
       )
       VALUES (
         uuid_generate_v4(),
         'test@gmail.com',
-        '$2b$10$3NxNtR9d3X9Y9Y9Y9Y9Y9O',
+        '$2b$10$sbBPi8R6fEmapaxT/WYKjeI3GSNpNnqmHQ0p/YLM/NBxaSimnu0MG',
         'John',
         'Doe',
         '${companyId}',
+        true,
         NOW(),
         NOW()
       );

@@ -1,12 +1,12 @@
 import { User } from '@closing/shared/interfaces';
-import { Client } from '@closing/shared/interfaces';
-import { TreeNode } from '@closing/shared/interfaces';
+import { Customer } from '@closing/shared/interfaces';
 
 export interface Session {
   id: string;
-  tree?: TreeNode;
+  treeId: string;
+  treeName: string;
   user?: User;
-  client?: Client;
+  customer?: Customer;
   status: SessionStatus;
   createdAt: Date;
   modifiedAt: Date;

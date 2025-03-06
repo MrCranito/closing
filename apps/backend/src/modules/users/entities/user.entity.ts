@@ -6,14 +6,17 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Company } from '../../company/entities/company.entity';
+import { Team } from '../../teams/entities/team.entity';
 
 export enum UserRole {
-  OWNER = 'owner',
-  ADMIN = 'admin',
-  USER = 'user',
+  Admin = 'admin',
+  Moderator = 'moderator',
+  Viewer = 'viewer',
 }
 
 @Entity('users')
@@ -57,12 +60,20 @@ export class User {
   @Column({
     type: 'enum',
     enum: UserRole,
-    default: UserRole.USER,
+    default: UserRole.Viewer,
   })
   role: UserRole;
 
   @Column('uuid', { name: 'team_ids', array: true, default: [] })
   teamIds: string[];
+
+  @ManyToMany(() => Team, (team) => team.members)
+  @JoinTable({
+    name: 'team_members',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'team_id', referencedColumnName: 'id' },
+  })
+  teams: Team[];
 
   @ManyToOne(() => Company, (company) => company.users, { nullable: true })
   @JoinColumn({ name: 'company_id' })
