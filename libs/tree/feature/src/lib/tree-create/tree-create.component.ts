@@ -27,6 +27,8 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  AbstractControl,
+  FormArray,
 } from '@angular/forms';
 import * as _ from 'lodash';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -71,6 +73,16 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   private router: Router = inject(Router);
   @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
 
+  private createNodeFormGroup(node: TreeNode): FormGroup {
+    return this.formBuilder.group({
+      name: [node.name, [Validators.required, Validators.minLength(3)]],
+      description: [node.description || ''],
+      children: this.formBuilder.array(
+        (node.children || []).map((child) => this.createNodeFormGroup(child))
+      ),
+    });
+  }
+
   private treeData: Partial<Tree> = {
     name: 'Tree Node Default',
     description: 'A default tree node structure',
@@ -103,6 +115,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   protected nodeForm: FormGroup = this.formBuilder.group({
     name: ['', [Validators.required, Validators.minLength(3)]],
     description: [''],
+    children: new FormArray([]),
   });
 
   private svg: any;
@@ -125,6 +138,10 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.form.get('name')?.valueChanges.subscribe(() => {
       this.form.markAllAsTouched();
+    });
+
+    this.nodeForm.get('children')?.valueChanges.subscribe(() => {
+      console.log(this.nodeForm.get('children')?.value);
     });
   }
 
@@ -353,7 +370,201 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     `;
   }
 
-  private onNodeClick(selectedNode: TreeNode): void {
+  protected addNode(parentId: string): void {
+    if (!this.editedTree.rootNode) return;
+
+    const newNode: TreeNode = {
+      id: uuidv4(),
+      name: 'New Node',
+      description: '',
+      children: [],
+    };
+
+    const parentNode = this.findNode(this.editedTree.rootNode, parentId);
+    if (parentNode) {
+      if (!parentNode.children) {
+        parentNode.children = [];
+      }
+      parentNode.children.push(newNode);
+
+      // Update the form structure
+      if (this.selectedNode) {
+        const childFormArray = this.findChildFormArray(this.nodeForm, parentId);
+        if (childFormArray) {
+          childFormArray.push(this.createNodeFormGroup(newNode));
+        }
+      }
+
+      console.log(this.nodeForm.value);
+
+      this.renderTree();
+    }
+  }
+
+  private findChildFormArray(
+    formGroup: FormGroup,
+    nodeId: string
+  ): FormArray | null {
+    // Check if the current form group represents the target node
+    const currentNodeId = this.findNodeIdForFormGroup(formGroup);
+    if (currentNodeId === nodeId) {
+      return formGroup.get('children') as FormArray;
+    }
+
+    // Get the children form array of the current form group
+    const childrenArray = formGroup.get('children') as FormArray;
+    if (!childrenArray) return null;
+
+    // Recursively search through all children
+    for (let i = 0; i < childrenArray.length; i++) {
+      const childFormGroup = childrenArray.at(i) as FormGroup;
+      const result = this.findChildFormArray(childFormGroup, nodeId);
+      if (result) return result;
+    }
+
+    return null;
+  }
+
+  private findNodeIdForFormGroup(formGroup: FormGroup): string | null {
+    // Find the corresponding node in the tree structure based on the form group's values
+    const nameControl = formGroup.get('name');
+    const descriptionControl = formGroup.get('description');
+
+    const name = (nameControl?.value as string) || '';
+    const description = (descriptionControl?.value as string) || '';
+
+    // Search through the tree to find the matching node
+    const findNodeByValues = (node: TreeNode): string | null => {
+      if (node.name === name && node.description === description) {
+        return node.id || null;
+      }
+
+      if (node.children) {
+        for (const child of node.children) {
+          const result = findNodeByValues(child);
+          if (result) return result;
+        }
+      }
+
+      return null;
+    };
+
+    return this.editedTree.rootNode
+      ? findNodeByValues(this.editedTree.rootNode)
+      : null;
+  }
+
+  protected removeNode(nodeId: string): void {
+    if (!this.editedTree.rootNode) return;
+
+    const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
+    if (parentNode) {
+      if (parentNode.children) {
+        parentNode.children = parentNode.children.filter(
+          (child: TreeNode) => child.id !== nodeId
+        );
+        this.renderTree();
+      }
+    }
+  }
+
+  private findNode(node: TreeRootNode | TreeNode, id: string): TreeNode | null {
+    if (node.id === id) {
+      return node as TreeNode;
+    }
+
+    if ('children' in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        const found = this.findNode(child, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  private findParentNode(
+    node: Tree | TreeRootNode | TreeNode,
+    id: string
+  ): TreeNode | null {
+    // Handle Tree type
+    if ('rootNode' in node && !('children' in node)) {
+      return this.findParentNode(node.rootNode, id);
+    }
+
+    // Handle TreeRootNode and TreeNode types
+    if ('children' in node && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        if (child.id === id) {
+          return node as TreeNode;
+        }
+        const found = this.findParentNode(child, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  protected onSubmitNodeForm(): void {
+    if (!this.selectedNode || !this.nodeForm.valid) return;
+
+    const formValue = this.nodeForm.value;
+    this.selectedNode.name = formValue.name;
+    this.selectedNode.description = formValue.description;
+    this.renderTree();
+  }
+
+  protected addWidget(widgetType: string): void {
+    if (!this.selectedNode) return;
+
+    const widget: NodeWidget = {
+      id: uuidv4(),
+      type: widgetType,
+      config: {},
+    };
+
+    if (!this.selectedNode.widgets) {
+      this.selectedNode.widgets = [];
+    }
+    this.selectedNode.widgets.push(widget);
+    this.renderTree();
+  }
+
+  protected addAction(): void {
+    if (!this.selectedNode) return;
+
+    const action: NodeAction = {
+      id: uuidv4(),
+      name: 'New Action',
+      type: 'button',
+      config: {},
+    };
+
+    if (!this.selectedNode.actions) {
+      this.selectedNode.actions = [];
+    }
+    this.selectedNode.actions.push(action);
+    this.renderTree();
+  }
+
+  protected removeAction(action: NodeAction): void {
+    if (!this.selectedNode?.actions) return;
+
+    this.selectedNode.actions = this.selectedNode.actions.filter(
+      (a: NodeAction) => a.id !== action.id
+    );
+    this.renderTree();
+  }
+
+  protected removeWidget(widget: NodeWidget): void {
+    if (!this.selectedNode?.widgets) return;
+
+    this.selectedNode.widgets = this.selectedNode.widgets.filter(
+      (w) => w.id !== widget.id
+    );
+    this.renderTree();
+  }
+
+  protected onNodeClick(selectedNode: TreeNode): void {
     // Remove highlight from all nodes (reset to white)
     this.container.selectAll('.node rect').style('fill', 'white');
 
@@ -372,10 +583,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     this.createDeleteButton(this.highlightedNode);
 
     this.selectedNode = selectedNode;
-    this.nodeForm.patchValue({
-      name: selectedNode.name,
-      description: selectedNode.description || '',
-    });
+    this.nodeForm = this.createNodeFormGroup(selectedNode);
     this.sidebarVisible = true;
   }
 
@@ -509,135 +717,5 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
               .style('border-width', '2px');
           });
       });
-  }
-
-  protected addNode(parentId: string): void {
-    if (!this.editedTree.rootNode) return;
-
-    const newNode: TreeNode = {
-      id: uuidv4(),
-      name: 'New Node',
-      description: '',
-      children: [],
-    };
-
-    const parentNode = this.findNode(this.editedTree.rootNode, parentId);
-    if (parentNode) {
-      if (!parentNode.children) {
-        parentNode.children = [];
-      }
-      parentNode.children.push(newNode);
-      this.renderTree();
-    }
-  }
-
-  protected removeNode(nodeId: string): void {
-    if (!this.editedTree.rootNode) return;
-
-    const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
-    if (parentNode) {
-      if (parentNode.children) {
-        parentNode.children = parentNode.children.filter(
-          (child: TreeNode) => child.id !== nodeId
-        );
-        this.renderTree();
-      }
-    }
-  }
-
-  private findNode(node: TreeRootNode | TreeNode, id: string): TreeNode | null {
-    if (node.id === id) {
-      return node as TreeNode;
-    }
-
-    if ('children' in node && Array.isArray(node.children)) {
-      for (const child of node.children) {
-        const found = this.findNode(child, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  private findParentNode(
-    node: Tree | TreeRootNode | TreeNode,
-    id: string
-  ): TreeNode | null {
-    // Handle Tree type
-    if ('rootNode' in node && !('children' in node)) {
-      return this.findParentNode(node.rootNode, id);
-    }
-
-    // Handle TreeRootNode and TreeNode types
-    if ('children' in node && Array.isArray(node.children)) {
-      for (const child of node.children) {
-        if (child.id === id) {
-          return node as TreeNode;
-        }
-        const found = this.findParentNode(child, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  protected onSubmitNodeForm(): void {
-    if (!this.selectedNode || !this.nodeForm.valid) return;
-
-    const formValue = this.nodeForm.value;
-    this.selectedNode.name = formValue.name;
-    this.selectedNode.description = formValue.description;
-    this.renderTree();
-  }
-
-  protected addWidget(widgetType: string): void {
-    if (!this.selectedNode) return;
-
-    const widget: NodeWidget = {
-      id: uuidv4(),
-      type: widgetType,
-      config: {},
-    };
-
-    if (!this.selectedNode.widgets) {
-      this.selectedNode.widgets = [];
-    }
-    this.selectedNode.widgets.push(widget);
-    this.renderTree();
-  }
-
-  protected addAction(): void {
-    if (!this.selectedNode) return;
-
-    const action: NodeAction = {
-      id: uuidv4(),
-      name: 'New Action',
-      type: 'button',
-      config: {},
-    };
-
-    if (!this.selectedNode.actions) {
-      this.selectedNode.actions = [];
-    }
-    this.selectedNode.actions.push(action);
-    this.renderTree();
-  }
-
-  protected removeAction(action: NodeAction): void {
-    if (!this.selectedNode?.actions) return;
-
-    this.selectedNode.actions = this.selectedNode.actions.filter(
-      (a: NodeAction) => a.id !== action.id
-    );
-    this.renderTree();
-  }
-
-  protected removeWidget(widget: NodeWidget): void {
-    if (!this.selectedNode?.widgets) return;
-
-    this.selectedNode.widgets = this.selectedNode.widgets.filter(
-      (w) => w.id !== widget.id
-    );
-    this.renderTree();
   }
 }

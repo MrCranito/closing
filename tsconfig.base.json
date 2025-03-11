@@ -38,18 +38,18 @@
       "@closing/layout/feature-shell": [
         "libs/layout/feature-shell/src/index.ts"
       ],
-      "@closing/session/data-access": ["libs/session/data-access/src/index.ts"],
-      "@closing/session/feature": ["libs/session/feature/src/index.ts"],
-      "@closing/session/feature-shell": [
-        "libs/session/feature-shell/src/index.ts"
-      ],
       "@closing/shared/data-access": ["libs/shared/data-access/src/index.ts"],
       "@closing/shared/interfaces": ["libs/shared/interfaces/src/index.ts"],
       "@closing/shared/ui-feature": ["libs/shared/ui-feature/src/index.ts"],
       "@closing/shared/utils": ["libs/shared/utils/src/index.ts"],
       "@closing/tree/data-access": ["libs/tree/data-access/src/index.ts"],
       "@closing/tree/feature": ["libs/tree/feature/src/index.ts"],
-      "@closing/tree/feature-shell": ["libs/tree/feature-shell/src/index.ts"]
+      "@closing/tree/feature-shell": ["libs/tree/feature-shell/src/index.ts"],
+      "@closing/scenario/data-access": ["libs/scenario/data-access/src/index.ts"],
+      "@closing/scenario/feature": ["libs/scenario/feature/src/index.ts"],
+      "@closing/scenario/feature-shell": [
+        "libs/scenario/feature-shell/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

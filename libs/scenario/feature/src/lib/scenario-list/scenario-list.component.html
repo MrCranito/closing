@@ -1,0 +1,84 @@
+<div class="flex p-4 pb-6">
+  <p-table
+    [value]="scenarios()"
+    [columns]="columns"
+    [lazy]="true"
+    [loading]="loading()"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="true"
+    [rows]="10"
+    [totalRecords]="store.total()"
+    [rowsPerPageOptions]="[10, 20, 50]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+    [tableStyle]="{ 'min-width': '50rem' }"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th *ngFor="let col of columns">
+          {{ col.header }}
+        </th>
+        <th>Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-scenario>
+      <tr>
+        <td *ngFor="let col of columns">
+          <ng-container
+            [ngTemplateOutlet]="
+              col.template ? getTemplate(col.template) : defaultTemplate
+            "
+            [ngTemplateOutletContext]="{ $implicit: scenario }"
+          ></ng-container>
+        </td>
+        <td>
+          <p-button
+            icon="pi pi-plus"
+            severity="success"
+            size="small"
+            label="Create scenario"
+            (click)="startNewScenario()"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7">No scenarios found.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<ng-template #treeTemplate let-scenario>
+  <p-button
+    [label]="scenario.treeName"
+    severity="secondary"
+    size="small"
+    (onClick)="goToTree(scenario.treeId)"
+  ></p-button>
+</ng-template>
+
+<ng-template #dateTemplate let-scenario>
+  {{ scenario.createdAt | date : 'dd/MM/yyyy HH:mm' }}
+</ng-template>
+
+<ng-template #avatarTemplate let-scenario>
+  <p-avatar
+    [pTooltip]="scenario.user.lastname + ' ' + scenario.user.firstname"
+    [label]="
+      scenario.user.firstname.charAt(0) + scenario.user.lastname.charAt(0)
+    "
+    shape="circle"
+  ></p-avatar>
+</ng-template>
+
+<ng-template #statusTemplate let-scenario>
+  <p-tag [value]="scenario.status" [severity]="'success'" />
+</ng-template>
+
+<ng-template #defaultTemplate let-scenario let-col="col">
+  {{ col.subField ? scenario[col.field][col.subField] : scenario[col.field] }}
+</ng-template>

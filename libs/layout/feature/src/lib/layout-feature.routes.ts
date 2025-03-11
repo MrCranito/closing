@@ -2,9 +2,9 @@ import { Route } from '@angular/router';
 import { AuthGuard } from '@closing/shared/utils';
 import { AuthStore } from '@closing/shared/data-access';
 import { MainNavigationRoutes } from '@closing/shared/interfaces';
-import { SessionStore } from '@closing/session/data-access';
 import { UsersStore } from '@closing/users/data-access';
 import { TreeStore } from '@closing/tree/data-access';
+import { ScenarioStore } from '@closing/scenario/data-access';
 
 export const routes: Route[] = [
   {
@@ -29,11 +29,11 @@ export const routes: Route[] = [
         providers: [AuthStore, TreeStore],
       },
       {
-        path: MainNavigationRoutes.Session,
+        path: MainNavigationRoutes.Scenario,
         loadChildren: () =>
-          import('@closing/session/feature-shell').then((m) => m.routes),
+          import('@closing/scenario/feature-shell').then((m) => m.routes),
         canActivate: [AuthGuard],
-        providers: [AuthStore, SessionStore],
+        providers: [AuthStore, ScenarioStore],
       },
       {
         path: MainNavigationRoutes.Users,

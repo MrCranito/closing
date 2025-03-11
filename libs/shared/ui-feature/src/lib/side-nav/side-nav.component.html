@@ -1,22 +1,60 @@
 <aside
   id="logo-sidebar"
   style="padding-top: 14px"
-  class="h-full w-full transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+  class="h-full transition-all transform group w-16 hover:w-64 duration-300 ease-in-out bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
   aria-label="Sidebar"
 >
-  <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+  <div
+    class="h-full px-3 pb-4 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-800 transition-all duration-300"
+  >
+    <!-- App Icon -->
+    <div class="flex items-center justify-center mb-5">
+      <img
+        src="assets/logo.png"
+        alt="App Logo"
+        class="w-6 h-6 group-hover:w-10 group-hover:h-10 transition-all duration-300"
+      />
+      <span
+        class="ms-3 text-xl font-semibold whitespace-nowrap dark:text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0"
+        >Closing</span
+      >
+    </div>
+
     <ul class="space-y-2 font-medium">
       <li *ngFor="let item of menuItems">
         <a
           [routerLink]="item.routerLink"
           routerLinkActive="bg-gray-100 dark:bg-gray-700"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
         >
-          <i [class]="item.icon"></i>
-          <span class="ms-3">{{ item.label }}</span>
+          <i [class]="item.icon + ' transition-transform duration-300'"></i>
+          <span
+            class="ms-3 whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0"
+            >{{ item.label }}</span
+          >
         </a>
       </li>
     </ul>
+
+    <!-- Avatar Button -->
+    <div class="absolute bottom-0 left-0 right-0 p-3">
+      <button
+        type="button"
+        class="flex items-center w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
+      >
+        <div
+          class="flex items-center nms-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0"
+        >
+          <i class="fa-solid fa-user"></i>
+          <div class="d-flex flex-col ms-3">
+            <p class="text-sm font-medium truncate">User Name</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+              user.example.com
+            </p>
+          </div>
+        </div>
+      </button>
+    </div>
   </div>
 </aside>

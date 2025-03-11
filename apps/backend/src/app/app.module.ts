@@ -7,8 +7,9 @@ import appConfig from './config/app.config';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CompanyModule } from '../modules/company/company.module';
 import { TreeModule } from '../modules/tree/tree.module';
-import { SessionsModule } from '../modules/sessions/sessions.module';
 import { CustomersModule } from '../modules/customers/customer.module';
+import { ScenariosModule } from '../modules/scenarios/scenarios.module';
+
 const typeOrmModuleConfig: TypeOrmModuleOptions = {
   type: 'postgres',
   host: process.env.POSTGRES_HOST || 'api_closing_pg',
@@ -51,8 +52,8 @@ const typeOrmModuleConfig: TypeOrmModuleOptions = {
     AuthModule,
     CompanyModule,
     TreeModule,
-    SessionsModule,
     CustomersModule,
+    ScenariosModule,
   ],
   controllers: [],
   providers: [],

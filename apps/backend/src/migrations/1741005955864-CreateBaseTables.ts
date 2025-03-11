@@ -188,10 +188,10 @@ export class CreateBaseTables1741005955864 implements MigrationInterface {
       })
     );
 
-    // Create Session table
+    // Create Scenario table
     await queryRunner.createTable(
       new Table({
-        name: 'session',
+        name: 'scenario',
         columns: [
           {
             name: 'id',
@@ -394,9 +394,9 @@ export class CreateBaseTables1741005955864 implements MigrationInterface {
       ADD CONSTRAINT pk_team_members PRIMARY KEY (team_id, user_id);
     `);
 
-    // Add foreign key for session.user_id
+    // Add foreign key for scenario.user_id
     await queryRunner.createForeignKey(
-      'session',
+      'scenario',
       new TableForeignKey({
         columnNames: ['user_id'],
         referencedColumnNames: ['id'],
@@ -404,27 +404,43 @@ export class CreateBaseTables1741005955864 implements MigrationInterface {
         onDelete: 'CASCADE',
       })
     );
+
+    // Add foreign key for scenario.customer_id
+    await queryRunner.createForeignKey(
+      'scenario',
+      new TableForeignKey({
+        columnNames: ['customer_id'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'customers',
+        onDelete: 'CASCADE',
+      })
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop foreign keys first
-    const sessionTable = await queryRunner.getTable('session');
+    const scenarioTable = await queryRunner.getTable('scenario');
+    if (scenarioTable) {
+      const foreignKeys = scenarioTable.foreignKeys;
+      for (const foreignKey of foreignKeys) {
+        await queryRunner.dropForeignKey('scenario', foreignKey);
+      }
+    }
+
     const teamsTable = await queryRunner.getTable('teams');
-
-    const sessionUserForeignKey = sessionTable.foreignKeys.find(
-      (fk) => fk.columnNames.indexOf('user_id') !== -1
-    );
-    const teamsCompanyForeignKey = teamsTable.foreignKeys.find(
-      (fk) => fk.columnNames.indexOf('company_id') !== -1
-    );
-
-    await queryRunner.dropForeignKey('session', sessionUserForeignKey);
-    await queryRunner.dropForeignKey('teams', teamsCompanyForeignKey);
+    if (teamsTable) {
+      const teamsCompanyForeignKey = teamsTable.foreignKeys.find(
+        (fk) => fk.columnNames.indexOf('company_id') !== -1
+      );
+      if (teamsCompanyForeignKey) {
+        await queryRunner.dropForeignKey('teams', teamsCompanyForeignKey);
+      }
+    }
 
     // Then drop tables
     await queryRunner.dropTable('team_members');
     await queryRunner.dropTable('users');
-    await queryRunner.dropTable('session');
+    await queryRunner.dropTable('scenario');
     await queryRunner.dropTable('teams');
     await queryRunner.dropTable('customers');
     await queryRunner.dropTable('companies');

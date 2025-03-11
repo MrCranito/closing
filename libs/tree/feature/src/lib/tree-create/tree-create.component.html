@@ -1,74 +1,7 @@
-<div class="h-full p-8 py-2">
+<div class="h-full">
   <div class="flex flex-col h-full">
-    <div class="flex justify-start py-4">
-      @if(!editMode) {
-      <div class="flex items-center gap-2">
-        <h3 class="text-lg font-semibold">{{ editedTree.name }}</h3>
-        <i class="pi pi-pencil cursor-pointer" (click)="editMode = true"></i>
-      </div>
-      } @else {
-      <form [formGroup]="form">
-        <div class="flex flex-col items-start gap-2">
-          <div class="flex gap-2">
-            <p-iconfield
-              iconPosition="right"
-              class="ml-auto"
-              aria-describedby="name-help"
-            >
-              <input
-                pInputText
-                type="text"
-                class="w-full p-2 border border-gray-300 rounded-md"
-                formControlName="name"
-              />
-              <p-inputicon
-                *ngIf="form.get('name')?.value"
-                styleClass="pi pi-times cursor-pointer"
-                (click)="form.get('name')?.setValue(tree.name)"
-              />
-            </p-iconfield>
-            <p-button
-              icon="pi pi-check"
-              aria-label="Save"
-              [disabled]="
-                form.get('name')?.hasError('minlength') ||
-                form.get('name')?.hasError('required')
-              "
-              (onClick)="saveTitle()"
-            />
-          </div>
-          <small
-            *ngIf="
-              form.get('name')?.hasError('minlength') ||
-              form.get('name')?.hasError('required')
-            "
-            class="text-red-500"
-            id="name-help"
-            >The tree name must be at least 3 characters long.</small
-          >
-        </div>
-      </form>
-      }
-    </div>
-    <div
-      class="h-full border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700"
-    >
+    <div class="h-full border-gray-200 dark:border-gray-700">
       <div class="card h-full w-full" #treeContainer></div>
-    </div>
-    <div class="flex justify-between py-4">
-      <p-button
-        outlined
-        [disabled]="isEqual || editMode"
-        label="Reset"
-        icon="pi pi-refresh"
-        (onClick)="resetTree()"
-      />
-      <p-button
-        label="Create"
-        icon="pi pi-plus"
-        [disabled]="isEqual || editMode"
-        (onClick)="createTree()"
-      />
     </div>
   </div>
 </div>

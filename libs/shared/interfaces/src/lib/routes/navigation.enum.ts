@@ -1,7 +1,7 @@
 export enum MainNavigationRoutes {
   Dashboard = '',
   Tree = 'tree',
-  Session = 'session',
+  Scenario = 'scenario',
   Users = 'users',
   Teams = 'teams',
   Settings = 'settings',

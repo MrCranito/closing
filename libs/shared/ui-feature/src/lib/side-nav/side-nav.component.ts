@@ -15,7 +15,7 @@ export interface MenuItem {
   imports: [CommonModule, ButtonModule, RouterModule],
   templateUrl: './side-nav.component.html',
   host: {
-    class: 'h-full w-64',
+    class: 'h-full',
   },
 })
 export class SideNavComponent {
@@ -33,9 +33,9 @@ export class SideNavComponent {
       routerLink: MainNavigationRoutes.Tree,
     },
     {
-      label: 'Sessions',
-      icon: 'pi pi-calendar',
-      routerLink: MainNavigationRoutes.Session,
+      label: 'Scenarios',
+      icon: 'pi pi-file-pdf',
+      routerLink: MainNavigationRoutes.Scenario,
     },
     {
       label: 'Users',
