@@ -287,12 +287,12 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         // Add container for icon
         const iconContainer = div
           .append('div')
+          .attr('class', 'dark:bg-gray-800')
           .style('width', '60px')
           .style('height', '60px')
           .style('display', 'flex')
           .style('align-items', 'center')
           .style('justify-content', 'center')
-          .style('background', 'white')
           .style('border-radius', '8px')
           .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
           .style('transition', 'all 0.3s ease')
@@ -310,9 +310,9 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         // Add name below container
         div
           .append('div')
+          .attr('class', 'dark:text-white')
           .style('font-size', '12px')
           .style('font-weight', '500')
-          .style('color', '#1f2937')
           .style('text-align', 'center')
           .style('max-width', '100px')
           .style('overflow', 'hidden')
@@ -327,17 +327,13 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         // Add hover effect to icon container
         iconContainer
           .on('mouseover', function () {
-            d3.select(this)
-              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
-              .style('background', '#f8fafc');
+            d3.select(this).style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)');
           })
           .on('mouseout', function () {
             const node = d3.select(this);
             // Only reset if not selected
             if (!node.classed('selected')) {
-              node
-                .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-                .style('background', 'white');
+              node.style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
             }
           });
       });
@@ -412,9 +408,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         }
       }
 
-      console.log(this.nodeForm.value);
-
-      this.renderTree();
+      -this.renderTree();
     }
   }
 
@@ -596,8 +590,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .selectAll('div')
       .classed('selected', false)
       .style('border-color', '#808184')
-      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-      .style('background', 'white');
+      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
 
     // Show connection points and lines only for the selected node
     const selectedNodeElement = this.container
@@ -617,8 +610,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .style('transform', 'scale(1)')
       .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
       .style('border-color', '#10b981')
-      .style('border-width', '2px')
-      .style('background', '#f8fafc');
+      .style('border-width', '2px');
 
     this.selectedNode = selectedNode;
     this.nodeForm = this.createNodeFormGroup(selectedNode);

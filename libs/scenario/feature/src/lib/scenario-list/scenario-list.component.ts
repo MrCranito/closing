@@ -1,4 +1,10 @@
-import { Component, inject, TemplateRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  inject,
+  TemplateRef,
+  ViewChild,
+  AfterViewInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScenarioStore, Scenario } from '@closing/scenario/data-access';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
@@ -17,6 +23,8 @@ import {
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { viewChild } from '@angular/core';
+import { Column } from '@closing/shared/interfaces';
 
 @Component({
   selector: 'app-scenario-list',
@@ -39,66 +47,64 @@ import { InputTextModule } from 'primeng/inputtext';
     class: 'w-full',
   },
 })
-export class ScenarioListComponent {
+export class ScenarioListComponent implements AfterViewInit {
   private router = inject(Router);
-  readonly #store = inject(ScenarioStore);
   private formBuilder = inject(FormBuilder);
+  readonly #store = inject(ScenarioStore);
 
-  scenarios: Signal<Scenario[]> = this.#store.scenariosEntities;
-  loading: Signal<boolean> = this.#store.loading;
-  total: Signal<number> = this.#store.total;
+  protected scenarios: Signal<Scenario[]> = this.#store.scenariosEntities;
+  protected loading: Signal<boolean> = this.#store.loading;
+  protected total: Signal<number> = this.#store.total;
+
   protected form = this.formBuilder.group({
     search: ['', Validators.required],
   });
 
-  @ViewChild('treeTemplate') treeTemplate!: TemplateRef<any>;
-  @ViewChild('dateTemplate') dateTemplate!: TemplateRef<any>;
-  @ViewChild('avatarTemplate') avatarTemplate!: TemplateRef<any>;
-  @ViewChild('statusTemplate') statusTemplate!: TemplateRef<any>;
-  @ViewChild('defaultTemplate') defaultTemplate!: TemplateRef<any>;
+  private treeTemplate = viewChild<TemplateRef<unknown>>('treeTemplate');
+  private dateTemplate = viewChild<TemplateRef<unknown>>('dateTemplate');
+  private avatarTemplate = viewChild<TemplateRef<unknown>>('avatarTemplate');
+  private statusTemplate = viewChild<TemplateRef<unknown>>('statusTemplate');
+  private defaultTemplate = viewChild<TemplateRef<unknown>>('defaultTemplate');
 
-  columns = [
-    {
-      field: 'user',
-      header: 'User',
-      subField: 'firstname',
-      template: 'avatar',
-    },
-    {
-      field: 'treeName',
-      header: 'Tree',
-      template: 'tree',
-    },
-    {
-      field: 'customer',
-      header: 'Customer',
-      subField: 'name',
-    },
-    {
-      field: 'status',
-      header: 'Status',
-      template: 'status',
-    },
-    {
-      field: 'createdAt',
-      header: 'Created At',
-      template: 'date',
-    },
-  ];
+  protected columns: Column[] = [];
 
-  getTemplate(templateName: string): TemplateRef<any> {
-    switch (templateName) {
-      case 'tree':
-        return this.treeTemplate;
-      case 'date':
-        return this.dateTemplate;
-      case 'avatar':
-        return this.avatarTemplate;
-      case 'status':
-        return this.statusTemplate;
-      default:
-        return this.defaultTemplate;
-    }
+  ngAfterViewInit(): void {
+    this.columns = [
+      {
+        field: 'user',
+        header: 'User',
+        sortable: true,
+        filterable: true,
+        template: this.avatarTemplate(),
+      },
+      {
+        field: 'treeName',
+        header: 'Tree',
+        template: this.treeTemplate(),
+        sortable: true,
+        filterable: true,
+      },
+      {
+        field: 'customer',
+        header: 'Customer',
+        sortable: true,
+        filterable: true,
+      },
+      {
+        field: 'status',
+        header: 'Status',
+        template: this.statusTemplate(),
+        sortable: true,
+        filterable: true,
+      },
+      {
+        field: 'createdAt',
+        header: 'Created At',
+        template: this.dateTemplate(),
+        sortable: true,
+        filterable: true,
+      },
+    ];
   }
 
   startNewScenario() {

@@ -1,4 +1,4 @@
-FROM node:18.12-alpine3.16
+FROM node:23-alpine3.20
 
 # bash & curl are installed for clever ssh debugging purposes
 # git & openssh are installed for getting packages from Gitlab

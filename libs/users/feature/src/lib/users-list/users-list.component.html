@@ -1,95 +1,92 @@
-<div class="flex p-4 pb-6">
-  <p-table
-    #dt
-    class="w-full"
-    [value]="users()"
-    [columns]="columns"
-    stripedRows
-    [rows]="10"
-    [paginator]="true"
-    [rowsPerPageOptions]="[10, 25, 50]"
-    [loading]="loading()"
-    [totalRecords]="total()"
-    (onLazyLoad)="onLazyLoad($event)"
-    [lazy]="true"
-    [size]="'small'"
-    dataKey="id"
-  >
-    <ng-template #caption>
-      <div class="flex py-2 justify-between">
-        <div class="flex items-center">
-          <form [formGroup]="form">
-            <p-iconfield>
-              <p-inputicon styleClass="pi pi-search" />
-              <input
-                pInputText
-                type="text"
-                class="p-inputtext-sm"
-                formControlName="search"
-                placeholder="Search"
-              />
-            </p-iconfield>
-          </form>
-        </div>
-
-        <div class="flex">
-          <button
-            outlined
-            pButton
-            type="button"
-            icon="pi pi-file-import"
-            label="Import"
-            (click)="importUsers()"
-            class="p-button-sm mr-3"
-          ></button>
-          <button
-            pButton
-            type="button"
-            icon="pi pi-user-plus"
-            label="Add user"
-            (click)="addUser()"
-            class="p-button-sm mr-3"
-          ></button>
-        </div>
+<p-table
+  #dt
+  class="w-full"
+  [value]="users()"
+  [columns]="columns"
+  stripedRows
+  [rows]="10"
+  [paginator]="true"
+  [loading]="loading()"
+  [totalRecords]="total()"
+  (onLazyLoad)="onLazyLoad($event)"
+  [lazy]="true"
+  [size]="'small'"
+  dataKey="id"
+>
+  <ng-template #caption>
+    <div class="flex px-6 py-4 justify-between">
+      <div class="flex items-center">
+        <form [formGroup]="form">
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-search" />
+            <input
+              pInputText
+              type="text"
+              class="p-inputtext-sm"
+              formControlName="search"
+              placeholder="Search"
+            />
+          </p-iconfield>
+        </form>
       </div>
-    </ng-template>
-    <ng-template #header>
-      <tr>
-        @for (column of columns; track column.field) {
-        <th>
-          <div class="flex items-center">
-            {{ column.header }}
-            @if (column.sortable) {
-            <p-sortIcon field="name"></p-sortIcon>
-            } @if (column.filterable) {
-            <p-columnFilter type="text" field="name" display="menu" />
-            }
-          </div>
-        </th>
-        }
-      </tr>
-    </ng-template>
-    <ng-template #body let-session>
-      <tr>
-        @for (column of columns; track column.field) { @if (column.template) {
-        <td>
-          <ng-template
-            [ngTemplateOutlet]="column.template"
-            [ngTemplateOutletContext]="{ $implicit: session }"
-          ></ng-template>
-        </td>
-        } @else {
-        <td>{{ session[column.field] }}</td>
-        } }
-      </tr>
-    </ng-template>
-    <ng-template #emptymessage>
-      <tr>
-        <td colspan="7">No users found.</td>
-      </tr>
-    </ng-template>
-  </p-table>
-</div>
+
+      <div class="flex">
+        <button
+          outlined
+          pButton
+          type="button"
+          icon="pi pi-file-import"
+          label="Import"
+          (click)="importUsers()"
+          class="p-button-sm mr-3 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 dark:hover:text-white dark:border-indigo-500"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-user-plus"
+          label="Add user"
+          (click)="addUser()"
+          class="p-button-sm mr-3 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600 dark:hover:text-white dark:border-indigo-500"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #header>
+    <tr>
+      @for (column of columns; track column.field) {
+      <th>
+        <div class="flex items-center">
+          {{ column.header }}
+          @if (column.sortable) {
+          <p-sortIcon field="name"></p-sortIcon>
+          } @if (column.filterable) {
+          <p-columnFilter type="text" field="name" display="menu" />
+          }
+        </div>
+      </th>
+      }
+    </tr>
+  </ng-template>
+  <ng-template #body let-user>
+    <tr>
+      @for (column of columns; track column.field) { @if (column.template) {
+      <td>
+        <ng-template
+          [ngTemplateOutlet]="column.template"
+          [ngTemplateOutletContext]="{ $implicit: user }"
+        ></ng-template>
+      </td>
+      } @else {
+      <td>{{ user[column.field] }}</td>
+      } }
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="7">No users found.</td>
+    </tr>
+  </ng-template>
+</p-table>
 
 <p-dialog
   header="Create user"
@@ -151,6 +148,12 @@
       (onClick)="showAddUserDialog = false"
     />
     <p-button label="Save" type="submit" />
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="7">No users found.</td>
+    </tr>
   </ng-template>
 </p-dialog>
 
