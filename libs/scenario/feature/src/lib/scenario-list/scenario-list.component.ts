@@ -8,6 +8,15 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AvatarModule } from 'primeng/avatar';
 import { Router } from '@angular/router';
 import { Signal } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
   selector: 'app-scenario-list',
@@ -19,16 +28,28 @@ import { Signal } from '@angular/core';
     TagModule,
     TooltipModule,
     AvatarModule,
+    ReactiveFormsModule,
+    InputTextModule,
+    IconFieldModule,
+    InputIconModule,
   ],
   templateUrl: './scenario-list.component.html',
   providers: [ScenarioStore],
+  host: {
+    class: 'w-full',
+  },
 })
 export class ScenarioListComponent {
   private router = inject(Router);
-  store = inject(ScenarioStore);
+  readonly #store = inject(ScenarioStore);
+  private formBuilder = inject(FormBuilder);
 
-  scenarios = this.store.scenariosEntities;
-  loading: Signal<boolean> = this.store.loading;
+  scenarios: Signal<Scenario[]> = this.#store.scenariosEntities;
+  loading: Signal<boolean> = this.#store.loading;
+  total: Signal<number> = this.#store.total;
+  protected form = this.formBuilder.group({
+    search: ['', Validators.required],
+  });
 
   @ViewChild('treeTemplate') treeTemplate!: TemplateRef<any>;
   @ViewChild('dateTemplate') dateTemplate!: TemplateRef<any>;
@@ -99,7 +120,7 @@ export class ScenarioListComponent {
       sorts = `${event.sortField}:${event.sortOrder === 1 ? 'ASC' : 'DESC'}`;
     }
 
-    this.store.getScenarios({
+    this.#store.getScenarios({
       page,
       size,
       sorts,

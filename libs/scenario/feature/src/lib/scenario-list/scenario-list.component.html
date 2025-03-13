@@ -1,5 +1,6 @@
 <div class="flex p-4 pb-6">
   <p-table
+    class="w-full"
     [value]="scenarios()"
     [columns]="columns"
     [lazy]="true"
@@ -7,12 +8,39 @@
     (onLazyLoad)="onLazyLoad($event)"
     [paginator]="true"
     [rows]="10"
-    [totalRecords]="store.total()"
+    [totalRecords]="total()"
     [rowsPerPageOptions]="[10, 20, 50]"
     [showCurrentPageReport]="true"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
     [tableStyle]="{ 'min-width': '50rem' }"
   >
+    <ng-template #caption>
+      <div class="flex py-2 justify-between">
+        <div class="flex items-center">
+          <form [formGroup]="form">
+            <p-iconfield>
+              <p-inputicon styleClass="pi pi-search" />
+              <input
+                pInputText
+                type="text"
+                class="p-inputtext-sm"
+                formControlName="search"
+                placeholder="Search"
+              />
+            </p-iconfield>
+          </form>
+        </div>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus"
+          label="Create a new scenario"
+          (click)="startNewScenario()"
+          class="p-button-sm mr-3"
+        ></button>
+      </div>
+    </ng-template>
     <ng-template pTemplate="header">
       <tr>
         <th *ngFor="let col of columns">

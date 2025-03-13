@@ -1,112 +1,108 @@
-<div class="h-full">
+<div class="h-full bg-gray-50">
   <div class="flex flex-col h-full">
-    <div class="h-full border-gray-200 dark:border-gray-700">
+    <div class="flex-grow border-gray-200 dark:border-gray-700">
       <div class="card h-full w-full" #treeContainer></div>
     </div>
-  </div>
-</div>
 
-<p-drawer [(visible)]="sidebarVisible" [style]="{ width: '400px' }">
-  <ng-template #header>
-    <div class="flex items-center gap-2">
-      <p-avatar
-        image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
-        shape="circle"
+    <div
+      class="absolute flex items-center top-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4"
+    >
+      <p-button
+        icon="pi pi-chevron-circle-left"
+        [rounded]="true"
+        [text]="true"
+        [pTooltip]="'Back'"
+        severity="secondary"
+        [tooltipPosition]="'bottom'"
+        (onClick)="goBack()"
       />
-      <span class="font-bold">Amy Elsner</span>
-    </div>
-  </ng-template>
 
-  @if(selectedNode) {
-  <div class="flex flex-col h-full">
-    <!-- Node Properties Section -->
-    <div class="mb-6">
-      <form
-        [formGroup]="nodeForm"
-        (ngSubmit)="onSubmitNodeForm()"
-        class="space-y-4"
-      >
-        <div class="flex flex-col gap-2">
-          <label for="nodeName" class="text-sm font-medium">Name</label>
-          <p-iconfield iconPosition="right" class="w-full">
-            <input
-              pInputText
-              id="nodeName"
-              type="text"
-              class="w-full"
-              formControlName="name"
-              placeholder="Enter node name"
-            />
-          </p-iconfield>
-          @if(nodeForm.get('name')?.hasError('required') &&
-          nodeForm.get('name')?.touched) {
-          <small class="text-red-500">Name is required</small>
-          } @if(nodeForm.get('name')?.hasError('minlength') &&
-          nodeForm.get('name')?.touched) {
-          <small class="text-red-500"
-            >Name must be at least 3 characters long</small
-          >
-          }
-        </div>
-        <div class="flex flex-col gap-2">
-          <label for="nodeDescription" class="text-sm font-medium"
-            >Description</label
-          >
-          <textarea
-            pInputTextarea
-            id="nodeDescription"
-            class="w-full"
-            formControlName="description"
-            rows="3"
-            placeholder="Enter node description"
-          ></textarea>
-        </div>
+      <form [formGroup]="nodeForm">
+        <input
+          pInputText
+          type="text"
+          class="p-inputtext-sm"
+          formControlName="title"
+          placeholder="New tree title"
+        />
       </form>
     </div>
 
-    <p-divider></p-divider>
-
-    <!-- Widgets Section -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold mb-4">Widgets</h3>
-      <div class="flex gap-2">
+    <div
+      class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4"
+    >
+      <div class="flex items-center justify-center space-x-4">
         <p-button
-          outlined
-          label="Add Widget"
           icon="pi pi-plus"
-          (onClick)="widgetMenu.toggle($event)"
-          class="w-full"
+          severity="secondary"
+          [size]="'small'"
+          [pTooltip]="'Add Node'"
+          [tooltipPosition]="'top'"
+          (onClick)="addNode()"
+        />
+        <p-button
+          icon="pi pi-sparkles"
+          severity="help"
+          [size]="'small'"
+          [pTooltip]="'AI Beta'"
+          [tooltipPosition]="'top'"
+          (onClick)="openAIChat()"
+        />
+        <p-button
+          icon="pi pi-sparkles"
+          severity="help"
+          [size]="'small'"
+          [pTooltip]="'AI Beta'"
+          [tooltipPosition]="'top'"
+          (onClick)="openAIChat()"
         />
 
-        <p-menu #widgetMenu [model]="widgetItems" [popup]="true" />
+        <p-button
+          icon="pi pi-sparkles"
+          severity="help"
+          [size]="'small'"
+          [pTooltip]="'AI Beta'"
+          [tooltipPosition]="'top'"
+          (onClick)="openAIChat()"
+        />
+        <p-button
+          icon="pi pi-trash"
+          [size]="'small'"
+          [pTooltip]="'Delete'"
+          [tooltipPosition]="'top'"
+          severity="secondary"
+          (onClick)="removeNode()"
+        />
       </div>
     </div>
 
-    <p-divider></p-divider>
-
-    <!-- Actions Section -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold mb-4">Actions</h3>
-      <div class="flex">
-        <p-button
-          outlined
-          label="Add Action"
-          icon="pi pi-plus"
-          (onClick)="addAction()"
-          class="w-full"
-        />
-      </div>
+    <div
+      class="absolute bottom-0 right-0 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2"
+    >
+      <p-button
+        icon="pi pi-plus"
+        severity="secondary"
+        [size]="'small'"
+        [pTooltip]="'Zoom In'"
+        [tooltipPosition]="'top'"
+        (onClick)="zoomIn()"
+      />
+      <p-button
+        icon="pi pi-minus"
+        severity="secondary"
+        [size]="'small'"
+        [pTooltip]="'Zoom Out'"
+        [tooltipPosition]="'top'"
+        (onClick)="zoomOut()"
+      />
+      <p-button
+        icon="pi pi-refresh"
+        severity="secondary"
+        [size]="'small'"
+        [pTooltip]="'Rotate'"
+        [tooltipPosition]="'top'"
+        (onClick)="rotate()"
+      />
     </div>
   </div>
-  } @else {
-  <div class="flex items-center justify-center h-full">
-    <p class="text-gray-500">Select a node to edit its properties</p>
-  </div>
-  }
-
-  <ng-template #footer>
-    <div class="flex w-full justify-end gap-2">
-      <p-button label="Save" />
-    </div>
-  </ng-template>
-</p-drawer>
+</div>

@@ -40,6 +40,7 @@ import { DrawerModule } from 'primeng/drawer';
 import { DividerModule } from 'primeng/divider';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
 type LinkData = {
   source: d3.HierarchyPointNode<TreeNode>;
   target: d3.HierarchyPointNode<TreeNode>;
@@ -60,6 +61,7 @@ type LinkData = {
     DrawerModule,
     DividerModule,
     MenuModule,
+    TooltipModule,
   ],
   standalone: true,
   templateUrl: './tree-create.component.html',
@@ -113,9 +115,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   protected sidebarVisible: boolean = false;
   protected selectedNode: TreeNode | null = null;
   protected nodeForm: FormGroup = this.formBuilder.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
-    description: [''],
-    children: new FormArray([]),
+    title: ['', [Validators.required, Validators.minLength(3)]],
   });
 
   private svg: any;
@@ -124,9 +124,10 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   private height = 0;
   private nodeIdCounter = 1;
   private zoom: any;
-  private highlightedNode: TreeNode | null = null;
   private button: any;
   private deleteButton: any;
+  private currentRotation = 0;
+  private isVertical = false; // Track tree orientation
 
   protected form: FormGroup = this.formBuilder.group({
     name: [
@@ -209,8 +210,8 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // Adjust nodeSize to account for dynamic text size
     const treeLayout = d3
       .tree<TreeNode>()
-      .nodeSize([150, 100]) // Fixed width for node, but dynamic height based on content
-      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // Increase separation between nodes    const root = d3.hierarchy(this.treeData, d => d.children);
+      .nodeSize(this.isVertical ? [150, 100] : [100, 150]) // Adjust node sizing based on orientation
+      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
 
     const root = d3.hierarchy<TreeNode>(
       this.editedTree.rootNode as unknown as TreeNode,
@@ -218,6 +219,16 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     );
 
     treeLayout(root);
+
+    // Handle coordinates based on orientation
+    root.descendants().forEach((node) => {
+      if (!this.isVertical) {
+        // Horizontal layout (default)
+        const temp = node.x;
+        node.x = node.y;
+        node.y = temp;
+      }
+    });
 
     const nodes = root.descendants();
     const links = root.links();
@@ -254,10 +265,10 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // Create foreignObject to embed HTML
     const foreignObject = nodeGroup
       .append('foreignObject')
-      .attr('width', 200)
-      .attr('height', 80)
-      .attr('x', -100)
-      .attr('y', -40);
+      .attr('width', 120) // Reduced from 200
+      .attr('height', 100) // Increased to accommodate text below
+      .attr('x', -60) // Adjusted for new width
+      .attr('y', -30); // Adjusted for new height
 
     // Create HTML content
     foreignObject
@@ -268,45 +279,56 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .style('display', 'flex')
       .style('flex-direction', 'column')
       .style('align-items', 'center')
-      .style('justify-content', 'center')
-      .style('background', 'white')
-      .style('border-radius', '8px')
-      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-      .style('transition', 'all 0.3s ease')
-      .style('cursor', 'pointer')
-      .style('border', '1px solid #e5e7eb')
+      .style('position', 'relative')
+      .style('padding-bottom', '20px')
       .each(function (this: HTMLElement, d: d3.HierarchyPointNode<TreeNode>) {
         const div = d3.select(this);
 
-        // Add icon
-        div
+        // Add container for icon
+        const iconContainer = div
+          .append('div')
+          .style('width', '60px')
+          .style('height', '60px')
+          .style('display', 'flex')
+          .style('align-items', 'center')
+          .style('justify-content', 'center')
+          .style('background', 'white')
+          .style('border-radius', '8px')
+          .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+          .style('transition', 'all 0.3s ease')
+          .style('cursor', 'pointer')
+          .style('border', '2px solid #808184')
+          .style('margin-bottom', '8px');
+
+        // Add icon to container
+        iconContainer
           .append('i')
           .attr('class', 'pi pi-folder')
           .style('font-size', '24px')
-          .style('color', '#10b981')
-          .style('margin-bottom', '4px');
+          .style('color', '#10b981');
 
-        // Add name
+        // Add name below container
         div
           .append('div')
-          .style('font-size', '14px')
+          .style('font-size', '12px')
           .style('font-weight', '500')
           .style('color', '#1f2937')
           .style('text-align', 'center')
-          .style('max-width', '180px')
+          .style('max-width', '100px')
           .style('overflow', 'hidden')
           .style('text-overflow', 'ellipsis')
           .style('white-space', 'nowrap')
+          .style('position', 'absolute')
+          .style('bottom', '0')
+          .style('left', '50%')
+          .style('transform', 'translateX(-50%)')
           .text(d.data.name);
 
-        // Add hover effect
-        div
+        // Add hover effect to icon container
+        iconContainer
           .on('mouseover', function () {
             d3.select(this)
-              .style('transform', 'scale(1.05)')
               .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
-              .style('border-color', '#10b981')
-              .style('border-width', '2px')
               .style('background', '#f8fafc');
           })
           .on('mouseout', function () {
@@ -314,23 +336,9 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
             // Only reset if not selected
             if (!node.classed('selected')) {
               node
-                .style('transform', 'scale(1)')
                 .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-                .style('border-color', '#e5e7eb')
-                .style('border-width', '1px')
                 .style('background', 'white');
             }
-          })
-          .on('click', function () {
-            const node = d3.select(this);
-            // Add selected class and apply selected styles
-            node
-              .classed('selected', true)
-              .style('transform', 'scale(1)')
-              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
-              .style('border-color', '#10b981')
-              .style('border-width', '2px')
-              .style('background', '#f8fafc');
           });
       });
 
@@ -338,20 +346,14 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     nodeGroup.each(
       (_: d3.HierarchyPointNode<TreeNode>, i: number, nodes: SVGGElement[]) => {
         const group = d3.select(nodes[i]);
-        const foreignObject = group.select('foreignObject');
-        foreignObject
-          .attr('width', 200)
-          .attr('height', 80)
-          .attr('x', -100)
-          .attr('y', -40);
+        const foreignObject = group
+          .select('foreignObject')
+          .attr('width', 120)
+          .attr('height', 100)
+          .attr('x', -60)
+          .attr('y', -30);
       }
     );
-
-    // Append plus button next to clicked node if available
-    if (this.highlightedNode) {
-      this.createPlusButton(this.highlightedNode);
-      this.createDeleteButton(this.highlightedNode);
-    }
   }
 
   private createForkedLink(d: LinkData): string {
@@ -360,17 +362,32 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     const childX = d.target.x;
     const childY = d.target.y;
 
-    const midY = (parentY + childY) / 2; // Intermediate join point
-
-    return `
-      M${parentX},${parentY}
-      V${midY}
-      H${childX}
-      V${childY}
-    `;
+    if (this.isVertical) {
+      // Vertical layout - links go down
+      const midY = (parentY + childY) / 2;
+      return `
+        M${parentX},${parentY}
+        V${midY}
+        H${childX}
+        V${childY}
+      `;
+    } else {
+      // Horizontal layout - links go right
+      const midX = (parentX + childX) / 2;
+      return `
+        M${parentX},${parentY}
+        H${midX}
+        V${childY}
+        H${childX}
+      `;
+    }
   }
 
-  protected addNode(parentId: string): void {
+  protected addNode(): void {
+    const parentId = this.selectedNode?.id;
+
+    if (!parentId) return;
+
     if (!this.editedTree.rootNode) return;
 
     const newNode: TreeNode = {
@@ -454,7 +471,10 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       : null;
   }
 
-  protected removeNode(nodeId: string): void {
+  protected removeNode(): void {
+    const nodeId = this.selectedNode?.id;
+    if (!nodeId) return;
+
     if (!this.editedTree.rootNode) return;
 
     const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
@@ -565,157 +585,95 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   }
 
   protected onNodeClick(selectedNode: TreeNode): void {
-    // Remove highlight from all nodes (reset to white)
-    this.container.selectAll('.node rect').style('fill', 'white');
+    // Hide all connection points and lines first
+    this.container.selectAll('.connection-group').style('display', 'none');
 
-    // Find and highlight the selected node
+    // Reset styling for all nodes first
     this.container
       .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode)
-      .select('rect')
-      .style('fill', '#34d399'); // Apply green color
+      .selectAll('foreignObject')
+      .selectAll('.tree-node')
+      .selectAll('div')
+      .classed('selected', false)
+      .style('border-color', '#808184')
+      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
+      .style('background', 'white');
 
-    // Store the highlighted node
-    this.highlightedNode = selectedNode;
+    // Show connection points and lines only for the selected node
+    const selectedNodeElement = this.container
+      .selectAll('.node')
+      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode);
 
-    // Optionally recreate plus/delete buttons
-    this.createPlusButton(this.highlightedNode);
-    this.createDeleteButton(this.highlightedNode);
+    selectedNodeElement
+      .selectAll('.connection-group')
+      .style('display', 'block');
+
+    // Apply styling to the selected node's icon container
+    selectedNodeElement
+      .select('foreignObject')
+      .select('.tree-node')
+      .select('div') // This selects the icon container
+      .classed('selected', true)
+      .style('transform', 'scale(1)')
+      .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
+      .style('border-color', '#10b981')
+      .style('border-width', '2px')
+      .style('background', '#f8fafc');
 
     this.selectedNode = selectedNode;
     this.nodeForm = this.createNodeFormGroup(selectedNode);
     this.sidebarVisible = true;
   }
 
-  private createPlusButton(node: TreeNode): void {
-    const nodeGroup = this.container
-      .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
-
-    // Remove existing plus button if any
-    if (this.button) {
-      this.button.remove();
-    }
-
-    // Create new plus button
-    this.button = nodeGroup
-      .append('g')
-      .attr('class', 'plus-button')
-      .attr('transform', 'translate(140, -30)') // Increased distance from node and between buttons
-      .on('click', () => this.addNode(node?.id || ''));
-
-    // Create foreignObject for HTML content
-    this.button
-      .append('foreignObject')
-      .attr('width', 36)
-      .attr('height', 36)
-      .attr('x', -18)
-      .attr('y', -18)
-      .append('xhtml:div')
-      .style('width', '100%')
-      .style('height', '100%')
-      .style('display', 'flex')
-      .style('align-items', 'center')
-      .style('justify-content', 'center')
-      .style('background', 'white')
-      .style('border-radius', '50%')
-      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-      .style('transition', 'all 0.3s ease')
-      .style('cursor', 'pointer')
-      .style('border', '2px solid #e5e7eb')
-      .each(function (this: HTMLElement) {
-        const div = d3.select(this);
-
-        div
-          .append('i')
-          .attr('class', 'pi pi-plus')
-          .style('font-size', '18px')
-          .style('color', '#10b981');
-
-        // Add hover effect
-        div
-          .on('mouseover', function () {
-            d3.select(this)
-              .style('transform', 'scale(1.05)')
-              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
-              .style('border-color', '#10b981')
-              .style('background', '#f3f4f6')
-              .style('border-width', '2px');
-          })
-          .on('mouseout', function () {
-            d3.select(this)
-              .style('transform', 'scale(1)')
-              .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-              .style('border-color', '#e5e7eb')
-              .style('background', 'white')
-              .style('border-width', '2px');
-          });
-      });
+  protected zoomIn(): void {
+    this.zoom.scaleBy(this.svg, 1.1);
   }
 
-  private createDeleteButton(node: TreeNode): void {
-    const nodeGroup = this.container
-      .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
+  protected zoomOut(): void {
+    this.zoom.scaleBy(this.svg, 0.9);
+  }
 
-    // Remove existing delete button if any
-    if (this.deleteButton) {
-      this.deleteButton.remove();
+  protected rotate(): void {
+    // Toggle between vertical and horizontal orientation
+    this.isVertical = !this.isVertical;
+
+    // Update rotation angle
+    this.currentRotation = this.isVertical ? 90 : 0;
+
+    // Re-render the tree with new orientation
+    this.renderTree();
+
+    // Get the center point of the SVG for rotation
+    const width = this.treeContainer.nativeElement.clientWidth;
+    const height = this.treeContainer.nativeElement.clientHeight;
+
+    // Adjust the container position based on orientation
+    if (this.isVertical) {
+      this.container.attr(
+        'transform',
+        `translate(${width / 2}, ${height / 10})`
+      );
+    } else {
+      this.container.attr(
+        'transform',
+        `translate(${width / 2}, ${height / 10})`
+      );
     }
+  }
 
-    // Create new delete button
-    this.deleteButton = nodeGroup
-      .append('g')
-      .attr('class', 'delete-button')
-      .attr('transform', 'translate(140, 30)') // Increased distance from node and between buttons
-      .on('click', () => this.removeNode(node?.id || ''));
+  protected openAIChat(): void {
+    // To be implemented
+  }
 
-    // Create foreignObject for HTML content
-    this.deleteButton
-      .append('foreignObject')
-      .attr('width', 36)
-      .attr('height', 36)
-      .attr('x', -18)
-      .attr('y', -18)
-      .append('xhtml:div')
-      .style('width', '100%')
-      .style('height', '100%')
-      .style('display', 'flex')
-      .style('align-items', 'center')
-      .style('justify-content', 'center')
-      .style('background', 'white')
-      .style('border-radius', '50%')
-      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-      .style('transition', 'all 0.3s ease')
-      .style('cursor', 'pointer')
-      .style('border', '2px solid #e5e7eb')
-      .each(function (this: HTMLElement) {
-        const div = d3.select(this);
+  protected undo(): void {
+    // To be implemented
+  }
 
-        div
-          .append('i')
-          .attr('class', 'pi pi-trash')
-          .style('font-size', '18px')
-          .style('color', '#10b981');
+  protected redo(): void {
+    // To be implemented
+  }
 
-        // Add hover effect
-        div
-          .on('mouseover', function () {
-            d3.select(this)
-              .style('transform', 'scale(1.05)')
-              .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
-              .style('border-color', '#10b981')
-              .style('background', '#f3f4f6')
-              .style('border-width', '2px');
-          })
-          .on('mouseout', function () {
-            d3.select(this)
-              .style('transform', 'scale(1)')
-              .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-              .style('border-color', '#e5e7eb')
-              .style('background', 'white')
-              .style('border-width', '2px');
-          });
-      });
+  protected goBack(): void {
+    this.router.navigate(['/tree']);
   }
 }
