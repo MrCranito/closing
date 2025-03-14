@@ -28,26 +28,11 @@
       </form>
     </div>
 
+    <!-- Main Toolbar Buttons -->
     <div
       class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4"
     >
       <div class="flex items-center justify-center space-x-4">
-        <p-button
-          icon="pi pi-plus"
-          severity="secondary"
-          [size]="'small'"
-          [pTooltip]="'Add Node'"
-          [tooltipPosition]="'top'"
-          (onClick)="addNode()"
-        />
-        <p-button
-          icon="pi pi-sparkles"
-          severity="help"
-          [size]="'small'"
-          [pTooltip]="'AI Beta'"
-          [tooltipPosition]="'top'"
-          (onClick)="openAIChat()"
-        />
         <p-button
           icon="pi pi-sparkles"
           severity="help"
@@ -58,12 +43,21 @@
         />
 
         <p-button
-          icon="pi pi-sparkles"
-          severity="help"
+          icon="fas fa-download"
           [size]="'small'"
-          [pTooltip]="'AI Beta'"
+          [pTooltip]="'Export'"
           [tooltipPosition]="'top'"
-          (onClick)="openAIChat()"
+          severity="secondary"
+          (onClick)="export()"
+        >
+        </p-button>
+        <p-button
+          icon="pi pi-save"
+          [size]="'small'"
+          [pTooltip]="'Save'"
+          [tooltipPosition]="'top'"
+          severity="secondary"
+          (onClick)="save()"
         />
         <p-button
           icon="pi pi-trash"
@@ -76,6 +70,54 @@
       </div>
     </div>
 
+    <!-- Right Toolbar Buttons -->
+    <div
+      class="absolute bottom-1/2 translate-y-1/2 right-4 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2"
+    >
+      <div class="flex flex-col space-y-2">
+        <p-button
+          icon="pi pi-plus"
+          severity="secondary"
+          [size]="'small'"
+          [pTooltip]="'Add Node'"
+          [tooltipPosition]="'left'"
+          (onClick)="addNode()"
+        />
+        <p-button
+          icon="pi pi-file-plus"
+          severity="secondary"
+          [size]="'small'"
+          [pTooltip]="'Add File'"
+          [tooltipPosition]="'left'"
+          (onClick)="addFileToNode()"
+        />
+        <p-button
+          icon="fas fa-list-check"
+          severity="secondary"
+          [size]="'small'"
+          [pTooltip]="'Add To Do List'"
+          [tooltipPosition]="'left'"
+          (onClick)="addTodoListToNode()"
+        />
+        <p-button
+          icon="fas fa-file-lines"
+          severity="secondary"
+          [size]="'small'"
+          [pTooltip]="'Add Form'"
+          [tooltipPosition]="'left'"
+          (onClick)="addFormToNode()"
+        />
+        <p-button
+          icon="pi pi-trash"
+          [size]="'small'"
+          [pTooltip]="'Delete'"
+          [tooltipPosition]="'left'"
+          severity="secondary"
+        />
+      </div>
+    </div>
+
+    <!-- Zoom Buttons -->
     <div
       class="absolute bottom-0 right-0 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2"
     >

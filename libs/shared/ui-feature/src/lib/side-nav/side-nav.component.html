@@ -37,22 +37,35 @@
       </li>
     </ul>
 
+    <!-- Theme Toggle Button -->
+    <div class="absolute bottom-16 left-0 right-0 p-3">
+      <button
+        type="button"
+        (click)="toggleTheme()"
+        class="flex items-center w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
+      >
+        <i [class]="isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+        <span
+          class="ms-3 whitespace-nowrap transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0"
+          >{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span
+        >
+      </button>
+    </div>
+
     <!-- Avatar Button -->
     <div class="absolute bottom-0 left-0 right-0 p-3">
       <button
         type="button"
         class="flex items-center w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
       >
+        <i class="fa-solid fa-user transition-transform duration-300"></i>
         <div
-          class="flex items-center nms-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-[-10px] group-hover:translate-x-0"
+          class="ms-3 transition-all duration-300 opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0"
         >
-          <i class="fa-solid fa-user"></i>
-          <div class="d-flex flex-col ms-3">
-            <p class="text-sm font-medium truncate">User Name</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-              user.example.com
-            </p>
-          </div>
+          <p class="text-sm font-medium truncate">User Name</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+            user.example.com
+          </p>
         </div>
       </button>
     </div>

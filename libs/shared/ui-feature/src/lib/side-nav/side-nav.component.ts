@@ -20,6 +20,7 @@ export interface MenuItem {
 })
 export class SideNavComponent {
   private router: Router = inject(Router);
+  protected isDarkMode = false;
 
   protected menuItems: MenuItem[] = [
     {
@@ -48,6 +49,11 @@ export class SideNavComponent {
       routerLink: MainNavigationRoutes.Settings,
     },
   ];
+
+  toggleTheme(): void {
+    this.isDarkMode = !this.isDarkMode;
+    document.documentElement.classList.toggle('dark');
+  }
 
   navigateToLogin(): void {
     this.router.navigate(['/auth']);

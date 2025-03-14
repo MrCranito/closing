@@ -19,8 +19,8 @@ export const routes: Route[] = [
   {
     path: NavigationRoutes.EDIT,
     loadComponent: () =>
-      import('./tree-edit/tree-edit.component').then(
-        (m) => m.TreeEditComponent
+      import('./sitemap-builder/sitemap-builder.component').then(
+        (m) => m.SitemapBuilderComponent
       ),
   },
   {

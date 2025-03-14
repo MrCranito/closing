@@ -665,6 +665,22 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // To be implemented
   }
 
+  protected save(): void {}
+
+  protected export(): void {}
+
+  protected addFormToNode(): void {
+    // To be implemented
+  }
+
+  protected addFileToNode(): void {
+    // To be implemented
+  }
+
+  protected addTodoListToNode(): void {
+    // To be implemented
+  }
+
   protected goBack(): void {
     this.router.navigate(['/tree']);
   }
