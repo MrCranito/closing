@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Router, RouterModule } from '@angular/router';
 import { MainNavigationRoutes } from '@closing/shared/interfaces';
+import { ThemeStore } from '@closing/shared/data-access';
 
 export interface MenuItem {
   label: string;
@@ -20,7 +21,13 @@ export interface MenuItem {
 })
 export class SideNavComponent {
   private router: Router = inject(Router);
-  protected isDarkMode = false;
+  private themeStore = inject(ThemeStore);
+  protected isDarkMode = this.themeStore.mode() === 'dark';
+
+  constructor() {
+    // Initialize theme on component creation
+    this.themeStore.initializeTheme();
+  }
 
   protected menuItems: MenuItem[] = [
     {
@@ -51,8 +58,7 @@ export class SideNavComponent {
   ];
 
   toggleTheme(): void {
-    this.isDarkMode = !this.isDarkMode;
-    document.documentElement.classList.toggle('dark');
+    this.themeStore.toggleTheme();
   }
 
   navigateToLogin(): void {

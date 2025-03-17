@@ -5,49 +5,42 @@
     </div>
 
     <div
-      class="absolute flex items-center top-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4"
+      class="absolute flex items-center space-x-4 top-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-900 border-gray-200 dark:border-gray-700 p-4"
     >
-      <p-button
-        icon="pi pi-chevron-circle-left"
-        [rounded]="true"
-        [text]="true"
-        [pTooltip]="'Back'"
-        severity="secondary"
-        [tooltipPosition]="'bottom'"
-        (onClick)="goBack()"
-      />
-
-      <form [formGroup]="nodeForm">
-        <input
-          pInputText
-          type="text"
-          class="p-inputtext-sm"
-          formControlName="title"
-          placeholder="New tree title"
-        />
-      </form>
-    </div>
-
-    <!-- Main Toolbar Buttons -->
-    <div
-      class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-4"
-    >
-      <div class="flex items-center justify-center space-x-4">
+      <div class="flex items-center space-x-2">
         <p-button
-          icon="pi pi-sparkles"
-          severity="help"
-          [size]="'small'"
-          [pTooltip]="'AI Beta'"
-          [tooltipPosition]="'top'"
-          (onClick)="openAIChat()"
+          icon="pi pi-chevron-circle-left"
+          [rounded]="true"
+          [text]="true"
+          [pTooltip]="'Back'"
+          severity="secondary"
+          [tooltipPosition]="'bottom'"
+          (onClick)="goBack()"
         />
 
+        <form [formGroup]="nodeForm">
+          <input
+            pInputText
+            type="text"
+            class="p-inputtext-sm"
+            formControlName="title"
+            placeholder="New tree title"
+          />
+        </form>
+      </div>
+
+      <div class="flex items-center justify-center space-x-2">
         <p-button
           icon="fas fa-download"
           [size]="'small'"
-          [pTooltip]="'Export'"
+          [pTooltip]="
+            editedTree._id
+              ? 'Export'
+              : 'Your tree must be saved before downloading it'
+          "
           [tooltipPosition]="'top'"
           severity="secondary"
+          [disabled]="!editedTree._id"
           (onClick)="export()"
         >
         </p-button>
@@ -65,16 +58,29 @@
           [pTooltip]="'Delete'"
           [tooltipPosition]="'top'"
           severity="secondary"
-          (onClick)="removeNode()"
+          (onClick)="deleteDialogVisible = true"
+        />
+      </div>
+
+      <p-divider layout="vertical" />
+
+      <div class="flex items-center">
+        <p-button
+          icon="pi pi-sparkles"
+          severity="help"
+          [size]="'small'"
+          [pTooltip]="'AI Beta'"
+          [tooltipPosition]="'top'"
+          (onClick)="openAIChat()"
         />
       </div>
     </div>
 
-    <!-- Right Toolbar Buttons -->
+    <!-- Main Toolbar Buttons -->
     <div
-      class="absolute bottom-1/2 translate-y-1/2 right-4 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2"
+      class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-900 border-gray-200 dark:border-gray-700 p-4"
     >
-      <div class="flex flex-col space-y-2">
+      <div class="flex space-x-2">
         <p-button
           icon="pi pi-plus"
           severity="secondary"
@@ -89,6 +95,7 @@
           [size]="'small'"
           [pTooltip]="'Add File'"
           [tooltipPosition]="'left'"
+          [disabled]="!selectedNode"
           (onClick)="addFileToNode()"
         />
         <p-button
@@ -97,6 +104,7 @@
           [size]="'small'"
           [pTooltip]="'Add To Do List'"
           [tooltipPosition]="'left'"
+          [disabled]="!selectedNode"
           (onClick)="addTodoListToNode()"
         />
         <p-button
@@ -105,6 +113,7 @@
           [size]="'small'"
           [pTooltip]="'Add Form'"
           [tooltipPosition]="'left'"
+          [disabled]="!selectedNode"
           (onClick)="addFormToNode()"
         />
         <p-button
@@ -113,38 +122,57 @@
           [pTooltip]="'Delete'"
           [tooltipPosition]="'left'"
           severity="secondary"
+          [disabled]="!selectedNode"
+          (onClick)="deleteNode()"
         />
       </div>
     </div>
 
     <!-- Zoom Buttons -->
     <div
-      class="absolute bottom-0 right-0 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2"
+      class="absolute bottom-0 right-0 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-900 border-gray-200 dark:border-gray-700 p-2"
     >
-      <p-button
-        icon="pi pi-plus"
-        severity="secondary"
-        [size]="'small'"
+      <i
+        class="pi pi-plus cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
         [pTooltip]="'Zoom In'"
         [tooltipPosition]="'top'"
-        (onClick)="zoomIn()"
-      />
-      <p-button
-        icon="pi pi-minus"
-        severity="secondary"
-        [size]="'small'"
+        style="font-size: 0.8rem"
+        (click)="zoomIn()"
+      ></i>
+      <i
+        class="pi pi-minus cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
         [pTooltip]="'Zoom Out'"
         [tooltipPosition]="'top'"
-        (onClick)="zoomOut()"
-      />
-      <p-button
-        icon="pi pi-refresh"
-        severity="secondary"
-        [size]="'small'"
+        style="font-size: 0.8rem"
+        (click)="zoomOut()"
+      ></i>
+      <i
+        class="pi pi-refresh cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
         [pTooltip]="'Rotate'"
         [tooltipPosition]="'top'"
-        (onClick)="rotate()"
-      />
+        style="font-size: 0.8rem"
+        (click)="rotate()"
+      ></i>
     </div>
   </div>
 </div>
+m
+
+<p-dialog
+  header="Delete Tree"
+  [modal]="true"
+  [(visible)]="deleteDialogVisible"
+  [style]="{ width: '25rem' }"
+>
+  <span class="p-text-secondary block mb-8"
+    >Are you sure you want to delete this tree?</span
+  >
+  <div class="flex justify-end gap-2">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      (click)="deleteDialogVisible = false"
+    />
+    <p-button label="Delete" severity="danger" (click)="deleteTree()" />
+  </div>
+</p-dialog>

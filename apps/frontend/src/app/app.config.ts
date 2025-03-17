@@ -13,6 +13,7 @@ import {
   AuthStore,
   environment,
   NotificationStore,
+  ThemeStore,
 } from '@closing/shared/data-access';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ENVIRONMENT } from '@closing/shared/interfaces';
@@ -35,5 +36,6 @@ export const appConfig: ApplicationConfig = {
     AuthStore,
     NotificationStore,
     MessageService,
+    ThemeStore,
   ],
 };

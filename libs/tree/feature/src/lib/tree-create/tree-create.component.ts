@@ -41,6 +41,7 @@ import { DividerModule } from 'primeng/divider';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
 type LinkData = {
   source: d3.HierarchyPointNode<TreeNode>;
   target: d3.HierarchyPointNode<TreeNode>;
@@ -62,6 +63,7 @@ type LinkData = {
     DividerModule,
     MenuModule,
     TooltipModule,
+    DialogModule,
   ],
   standalone: true,
   templateUrl: './tree-create.component.html',
@@ -117,6 +119,8 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   protected nodeForm: FormGroup = this.formBuilder.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
   });
+
+  protected deleteDialogVisible: boolean = false;
 
   private svg: any;
   private container: any;
@@ -180,6 +184,9 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   }
 
   private initializeSvg(): void {
+    const width = this.treeContainer.nativeElement.clientWidth;
+    const height = this.treeContainer.nativeElement.clientHeight;
+
     this.zoom = d3
       .zoom()
       .scaleExtent([0.1, 1])
@@ -194,12 +201,16 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .attr('height', '100%')
       .call(this.zoom);
 
-    const width = this.treeContainer.nativeElement.clientWidth;
-    const height = this.treeContainer.nativeElement.clientHeight;
-
+    // Create container with initial transform
     this.container = this.svg
       .append('g')
-      .attr('transform', `translate(${width / 2}, ${height / 10})`);
+      .attr('transform', `translate(${width / 2}, ${height / 2})`);
+
+    // Set initial zoom transform
+    this.svg.call(
+      this.zoom.transform,
+      d3.zoomIdentity.translate(width / 2, height / 2)
+    );
   }
 
   private initializeTree(): void {
@@ -265,10 +276,10 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // Create foreignObject to embed HTML
     const foreignObject = nodeGroup
       .append('foreignObject')
-      .attr('width', 120) // Reduced from 200
-      .attr('height', 100) // Increased to accommodate text below
-      .attr('x', -60) // Adjusted for new width
-      .attr('y', -30); // Adjusted for new height
+      .attr('width', 120)
+      .attr('height', 100)
+      .attr('x', -60)
+      .attr('y', -30);
 
     // Create HTML content
     foreignObject
@@ -287,53 +298,39 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         // Add container for icon
         const iconContainer = div
           .append('div')
-          .attr('class', 'dark:bg-gray-800')
-          .style('width', '60px')
-          .style('height', '60px')
-          .style('display', 'flex')
-          .style('align-items', 'center')
-          .style('justify-content', 'center')
-          .style('border-radius', '8px')
-          .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)')
-          .style('transition', 'all 0.3s ease')
-          .style('cursor', 'pointer')
-          .style('border', '2px solid #808184')
-          .style('margin-bottom', '8px');
+          .attr(
+            'class',
+            'bg-white dark:bg-gray-800 flex items-center justify-center rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer w-[60px] h-[60px] mb-2 border-2 border-gray-400'
+          );
 
         // Add icon to container
         iconContainer
           .append('i')
-          .attr('class', 'pi pi-folder')
-          .style('font-size', '24px')
-          .style('color', '#10b981');
+          .attr('class', 'pi pi-folder text-emerald-500')
+          .style('font-size', '24px');
 
         // Add name below container
         div
           .append('div')
-          .attr('class', 'dark:text-white')
-          .style('font-size', '12px')
-          .style('font-weight', '500')
-          .style('text-align', 'center')
-          .style('max-width', '100px')
-          .style('overflow', 'hidden')
-          .style('text-overflow', 'ellipsis')
-          .style('white-space', 'nowrap')
-          .style('position', 'absolute')
-          .style('bottom', '0')
-          .style('left', '50%')
+          .attr(
+            'class',
+            'text-inherit dark:text-white text-gray-700 text-sm font-medium text-center max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap absolute bottom-0 left-1/2'
+          )
           .style('transform', 'translateX(-50%)')
           .text(d.data.name);
 
         // Add hover effect to icon container
         iconContainer
           .on('mouseover', function () {
-            d3.select(this).style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)');
+            d3.select(this)
+              .classed('shadow-md', true)
+              .classed('shadow-sm', false);
           })
           .on('mouseout', function () {
             const node = d3.select(this);
             // Only reset if not selected
             if (!node.classed('selected')) {
-              node.style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
+              node.classed('shadow-sm', true).classed('shadow-md', false);
             }
           });
       });
@@ -350,6 +347,11 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
           .attr('y', -30);
       }
     );
+
+    // Automatically select the root node after rendering
+    if (this.editedTree.rootNode) {
+      this.onNodeClick(this.editedTree.rootNode);
+    }
   }
 
   private createForkedLink(d: LinkData): string {
@@ -408,7 +410,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         }
       }
 
-      -this.renderTree();
+      this.renderTree();
     }
   }
 
@@ -579,6 +581,9 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   }
 
   protected onNodeClick(selectedNode: TreeNode): void {
+    // Store current transform before making changes
+    const currentTransform = d3.zoomTransform(this.svg.node());
+
     // Hide all connection points and lines first
     this.container.selectAll('.connection-group').style('display', 'none');
 
@@ -589,8 +594,10 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .selectAll('.tree-node')
       .selectAll('div')
       .classed('selected', false)
-      .style('border-color', '#808184')
-      .style('box-shadow', '0 2px 4px rgba(0,0,0,0.1)');
+      .classed('border-emerald-500', false)
+      .classed('border-gray-400', true)
+      .classed('shadow-md', false)
+      .classed('shadow-sm', true);
 
     // Show connection points and lines only for the selected node
     const selectedNodeElement = this.container
@@ -607,10 +614,14 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .select('.tree-node')
       .select('div') // This selects the icon container
       .classed('selected', true)
-      .style('transform', 'scale(1)')
-      .style('box-shadow', '0 4px 6px rgba(0,0,0,0.1)')
-      .style('border-color', '#10b981')
+      .classed('border-gray-400', false)
+      .classed('border-emerald-500', true)
+      .classed('shadow-sm', false)
+      .classed('shadow-md', true)
       .style('border-width', '2px');
+
+    // Restore the transform to maintain position
+    this.container.attr('transform', currentTransform);
 
     this.selectedNode = selectedNode;
     this.nodeForm = this.createNodeFormGroup(selectedNode);
@@ -643,14 +654,22 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     if (this.isVertical) {
       this.container.attr(
         'transform',
-        `translate(${width / 2}, ${height / 10})`
+        `translate(${width / 2}, ${height / 2})`
       );
     } else {
       this.container.attr(
         'transform',
-        `translate(${width / 2}, ${height / 10})`
+        `translate(${width / 2}, ${height / 2})`
       );
     }
+  }
+
+  protected deleteTree(): void {
+    this.router.navigate(['/tree']);
+  }
+
+  protected deleteNode(): void {
+    // To be implemented
   }
 
   protected openAIChat(): void {
@@ -667,7 +686,40 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
 
   protected save(): void {}
 
-  protected export(): void {}
+  protected export(): void {
+    // Create a copy of the tree data without any circular references
+    const treeData = {
+      name: this.editedTree.name,
+      description: this.editedTree.description,
+      icon: this.editedTree.icon,
+      status: this.editedTree.status,
+      rootNode: this.editedTree.rootNode,
+    };
+
+    // Convert the tree data to a JSON string with proper formatting
+    const jsonString = JSON.stringify(treeData, null, 2);
+
+    // Create a Blob containing the JSON data
+    const blob = new Blob([jsonString], { type: 'application/json' });
+
+    // Create a URL for the Blob
+    const url = window.URL.createObjectURL(blob);
+
+    // Create a temporary anchor element to trigger the download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${this.editedTree.name || 'tree'}-${
+      new Date().toISOString().split('T')[0]
+    }.json`;
+
+    // Append the link to the document, click it, and remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up by revoking the URL
+    window.URL.revokeObjectURL(url);
+  }
 
   protected addFormToNode(): void {
     // To be implemented

@@ -2,8 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-
 body {
   height: 100vh;
+  @apply bg-background text-text;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+.dark body {
+  @apply bg-background-dark text-text-dark;
 }
 

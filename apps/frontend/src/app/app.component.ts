@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
-import { ThemeService } from '@closing/shared/utils';
+import { ThemeStore } from '@closing/shared/data-access';
 
 @Component({
   standalone: true,
@@ -13,11 +13,9 @@ import { ThemeService } from '@closing/shared/utils';
 export class AppComponent {
   title = 'frontend';
 
-  private themeService = inject(ThemeService);
+  private themeStore = inject(ThemeStore);
 
-  isDarkMode$ = this.themeService.isDarkMode$;
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
+  constructor() {
+    this.themeStore.initializeTheme();
   }
 }
