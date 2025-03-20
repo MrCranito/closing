@@ -18,12 +18,12 @@
           (onClick)="goBack()"
         />
 
-        <form [formGroup]="nodeForm">
+        <form [formGroup]="form">
           <input
             pInputText
             type="text"
             class="p-inputtext-sm"
-            formControlName="title"
+            formControlName="name"
             placeholder="New tree title"
           />
         </form>
@@ -50,6 +50,7 @@
           [pTooltip]="'Save'"
           [tooltipPosition]="'top'"
           severity="secondary"
+          [disabled]="!form.controls['name'].value"
           (onClick)="save()"
         />
         <p-button
@@ -80,53 +81,58 @@
     <div
       class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white shadow-lg dark:bg-gray-900 border-gray-200 dark:border-gray-700 p-4"
     >
-      <div class="flex space-x-2">
-        <p-button
-          icon="pi pi-plus"
-          severity="secondary"
-          [size]="'small'"
-          [pTooltip]="'Add Node'"
-          [tooltipPosition]="'left'"
-          (onClick)="addNode()"
-        />
-        <p-button
-          icon="pi pi-file-plus"
-          severity="secondary"
-          [size]="'small'"
-          [pTooltip]="'Add File'"
-          [tooltipPosition]="'left'"
-          [disabled]="!selectedNode"
-          (onClick)="addFileToNode()"
-        />
-        <p-button
-          icon="fas fa-list-check"
-          severity="secondary"
-          [size]="'small'"
-          [pTooltip]="'Add To Do List'"
-          [tooltipPosition]="'left'"
-          [disabled]="!selectedNode"
-          (onClick)="addTodoListToNode()"
-        />
-        <p-button
-          icon="fas fa-file-lines"
-          severity="secondary"
-          [size]="'small'"
-          [pTooltip]="'Add Form'"
-          [tooltipPosition]="'left'"
-          [disabled]="!selectedNode"
-          (onClick)="addFormToNode()"
-        />
-        <p-button
-          icon="pi pi-trash"
-          [size]="'small'"
-          [pTooltip]="'Delete'"
-          [tooltipPosition]="'left'"
-          severity="secondary"
-          [disabled]="!selectedNode"
-          (onClick)="deleteNode()"
-        />
+      <div class="flex flex-col space-y-2">
+        <!-- Node Actions -->
+        <div class="flex items-center space-x-2">
+          <span class="text-xs text-gray-500 font-medium w-14">Actions</span>
+          <div class="flex space-x-2">
+            <p-button
+              icon="pi pi-plus"
+              severity="secondary"
+              [size]="'small'"
+              [pTooltip]="'Add Node'"
+              [tooltipPosition]="'left'"
+              (onClick)="addNode()"
+              [disabled]="!selectedNode"
+            />
+            <p-button
+              #widgetBtn
+              icon="pi pi-th-large"
+              severity="secondary"
+              [size]="'small'"
+              [pTooltip]="'Add Widget'"
+              [tooltipPosition]="'left'"
+              [disabled]="!selectedNode"
+              (click)="widgetMenu.toggle($event)"
+            />
+            <p-button
+              icon="pi pi-bolt"
+              severity="secondary"
+              [size]="'small'"
+              [pTooltip]="'Add Action'"
+              [tooltipPosition]="'left'"
+              [disabled]="!selectedNode"
+            />
+            <p-button
+              icon="pi pi-trash"
+              [size]="'small'"
+              [pTooltip]="'Delete'"
+              [tooltipPosition]="'left'"
+              severity="secondary"
+              [disabled]="!selectedNode || isRootNode"
+              (onClick)="removeNode()"
+            />
+          </div>
+        </div>
       </div>
     </div>
+
+    <p-menu
+      #widgetMenu
+      [popup]="true"
+      [model]="widgetItems"
+      [appendTo]="'body'"
+    ></p-menu>
 
     <!-- Zoom Buttons -->
     <div
@@ -156,7 +162,6 @@
     </div>
   </div>
 </div>
-m
 
 <p-dialog
   header="Delete Tree"

@@ -79,19 +79,52 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
 
   private createNodeFormGroup(node: TreeNode): FormGroup {
     return this.formBuilder.group({
+      id: [node.id || uuidv4(), [Validators.required]],
       name: [node.name, [Validators.required, Validators.minLength(3)]],
       description: [node.description || ''],
+      createdAt: [node.createdAt || new Date()],
+      updatedAt: [node.updatedAt || new Date()],
+      archivedAt: [node.archivedAt],
+      createdBy: [node.createdBy],
+      updatedBy: [node.updatedBy],
+      archivedBy: [node.archivedBy],
+      widgets: this.formBuilder.array(node.widgets || []),
+      actions: this.formBuilder.array(node.actions || []),
       children: this.formBuilder.array(
         (node.children || []).map((child) => this.createNodeFormGroup(child))
       ),
+      x: [node.x || 0],
+      y: [node.y || 0],
     });
   }
 
-  private treeData: Partial<Tree> = {
+  protected widgetItems: MenuItem[] = [
+    {
+      label: 'File',
+      icon: 'pi pi-file-plus',
+      command: () => this.addFileToNode(),
+    },
+    {
+      label: 'Todo List',
+      icon: 'fas fa-list-check',
+      command: () => this.addTodoListToNode(),
+    },
+    {
+      label: 'Form',
+      icon: 'fas fa-file-lines',
+      command: () => this.addFormToNode(),
+    },
+  ];
+
+  protected tree: Partial<Tree> = {
+    _id: uuidv4(),
     name: 'Tree Node Default',
     description: 'A default tree node structure',
-    icon: 'fa-project-diagram',
     status: TreeStatus.ACTIVE,
+    permissions: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    icon: 'fa-project-diagram',
     rootNode: {
       id: uuidv4(),
       name: 'Root Node',
@@ -99,14 +132,6 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       children: [],
     },
   };
-
-  protected widgetItems: MenuItem[] = [
-    { label: 'Text', icon: 'pi pi-align-left' },
-    { label: 'Image', icon: 'pi pi-image' },
-    { label: 'Video', icon: 'pi pi-video' },
-  ];
-
-  protected tree: Partial<Tree> = this.treeData;
   protected editedTree: Partial<Tree> = _.cloneDeep(this.tree);
   protected editMode: boolean = false;
 
@@ -116,9 +141,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
 
   protected sidebarVisible: boolean = false;
   protected selectedNode: TreeNode | null = null;
-  protected nodeForm: FormGroup = this.formBuilder.group({
-    title: ['', [Validators.required, Validators.minLength(3)]],
-  });
+  protected isRootNode: boolean = false;
 
   protected deleteDialogVisible: boolean = false;
 
@@ -131,22 +154,41 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   private button: any;
   private deleteButton: any;
   private currentRotation = 0;
-  private isVertical = false; // Track tree orientation
+  private isVertical = false;
+  private drag: any;
+  private highlightedNode: TreeNode | null = null;
 
   protected form: FormGroup = this.formBuilder.group({
+    _id: [this.editedTree._id || uuidv4()],
     name: [
       this.editedTree.name,
       [Validators.required, Validators.minLength(3)],
     ],
+    description: [this.editedTree.description || ''],
+    status: [this.editedTree.status || TreeStatus.ACTIVE],
+    permissions: [this.editedTree.permissions || []],
+    createdAt: [this.editedTree.createdAt || new Date()],
+    updatedAt: [this.editedTree.updatedAt || new Date()],
+    archivedAt: [this.editedTree.archivedAt],
+    createdBy: [this.editedTree.createdBy],
+    updatedBy: [this.editedTree.updatedBy],
+    archivedBy: [this.editedTree.archivedBy],
+    icon: [this.editedTree.icon || 'fa-project-diagram'],
+    rootNode: this.createNodeFormGroup(
+      this.editedTree.rootNode || {
+        id: uuidv4(),
+        name: 'Root Node',
+        description: 'A default root node structure',
+        actions: [],
+        widgets: [],
+        children: [],
+      }
+    ),
   });
 
   ngOnInit(): void {
     this.form.get('name')?.valueChanges.subscribe(() => {
       this.form.markAllAsTouched();
-    });
-
-    this.nodeForm.get('children')?.valueChanges.subscribe(() => {
-      console.log(this.nodeForm.get('children')?.value);
     });
   }
 
@@ -157,18 +199,39 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   }
 
   protected resetTree(): void {
-    this.editedTree = _.cloneDeep(this.tree);
-    this.renderTree();
+    this.form.patchValue({
+      _id: uuidv4(),
+      name: 'New Tree',
+      description: 'A new tree structure',
+      status: TreeStatus.ACTIVE,
+      permissions: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      archivedAt: null,
+      createdBy: null,
+      updatedBy: null,
+      archivedBy: null,
+      icon: 'fa-project-diagram',
+      rootNode: this.editedTree.rootNode,
+    });
   }
 
   protected createTree(): void {
-    this.store.createTree(this.editedTree);
-    this.router.navigate(['/tree']);
+    if (this.form.valid) {
+      const treeData = this.form.value;
+      this.store.createTree(treeData);
+      this.router.navigate(['/tree']);
+    }
   }
 
   protected saveTitle(): void {
-    this.editedTree.name = this.form.get('name')?.value;
-    this.editMode = false;
+    if (this.form.get('name')?.valid) {
+      this.editedTree = {
+        ...this.editedTree,
+        name: this.form.get('name')?.value,
+      };
+      this.editMode = false;
+    }
   }
 
   @HostListener('window:resize', ['$event'])
@@ -213,6 +276,30 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     );
   }
 
+  private updateLinks(): void {
+    // Update links with smooth curves
+    this.container.selectAll('.link').attr('d', (d: LinkData) => {
+      const sourceX = d.source.x;
+      const sourceY = d.source.y;
+      const targetX = d.target.x;
+      const targetY = d.target.y;
+
+      // Calculate control points for the curve
+      const dx = targetX - sourceX;
+      const dy = targetY - sourceY;
+      const controlX1 = sourceX + dx * 0.5;
+      const controlY1 = sourceY;
+      const controlX2 = sourceX + dx * 0.5;
+      const controlY2 = targetY;
+
+      // Create a smooth curve using cubic Bézier
+      return `M${sourceX},${sourceY}
+              C${controlX1},${controlY1}
+               ${controlX2},${controlY2}
+               ${targetX},${targetY}`;
+    });
+  }
+
   private initializeTree(): void {
     this.renderTree();
   }
@@ -229,15 +316,38 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       (d) => d.children || []
     );
 
+    // Store previous node positions before computing new layout
+    const oldPositions = new Map();
+    if (this.container) {
+      this.container.selectAll('.node').each((d: any) => {
+        oldPositions.set(d.data.id, { x: d.x, y: d.y });
+      });
+    }
+
     treeLayout(root);
 
-    // Handle coordinates based on orientation
+    // Handle coordinates based on orientation and preserve old positions
     root.descendants().forEach((node) => {
-      if (!this.isVertical) {
-        // Horizontal layout (default)
+      const oldPos = oldPositions.get(node.data.id);
+      if (oldPos) {
+        // Keep old position for existing nodes
+        node.x = oldPos.x;
+        node.y = oldPos.y;
+        // Save position to node data
+        node.data.x = oldPos.x;
+        node.data.y = oldPos.y;
+      } else if (!this.isVertical) {
+        // Only adjust new nodes for horizontal layout
         const temp = node.x;
         node.x = node.y;
         node.y = temp;
+        // Save position to node data
+        node.data.x = node.x;
+        node.data.y = node.y;
+      } else {
+        // Save position to node data for vertical layout
+        node.data.x = node.x;
+        node.data.y = node.y;
       }
     });
 
@@ -246,17 +356,38 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
 
     this.container.selectAll('*').remove();
 
-    // Draw links
+    // Draw links with smooth curves
     this.container
       .selectAll('.link')
       .data(links)
       .enter()
       .append('path')
       .attr('class', 'link')
-      .attr('d', (d: LinkData) => this.createForkedLink(d))
+      .attr('d', (d: LinkData) => {
+        const sourceX = d.source.x;
+        const sourceY = d.source.y;
+        const targetX = d.target.x;
+        const targetY = d.target.y;
+
+        // Calculate control points for the curve
+        const dx = targetX - sourceX;
+        const dy = targetY - sourceY;
+        const controlX1 = sourceX + dx * 0.5;
+        const controlY1 = sourceY;
+        const controlX2 = sourceX + dx * 0.5;
+        const controlY2 = targetY;
+
+        // Create a smooth curve using cubic Bézier
+        return `M${sourceX},${sourceY}
+                C${controlX1},${controlY1}
+                 ${controlX2},${controlY2}
+                 ${targetX},${targetY}`;
+      })
       .style('stroke', '#999')
       .style('fill', 'none')
-      .style('stroke-width', 2);
+      .style('stroke-width', 2)
+      .style('stroke-linecap', 'round')
+      .style('stroke-linejoin', 'round');
 
     // Draw nodes
     const nodeGroup = this.container
@@ -269,12 +400,35 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         'transform',
         (d: d3.HierarchyPointNode<TreeNode>) => `translate(${d.x},${d.y})`
       )
+      .call(
+        d3
+          .drag()
+          .on('start', (event: any, d: any) => {
+            if (d.data === this.selectedNode) {
+              event.sourceEvent.stopPropagation();
+            }
+          })
+          .on('drag', (event: any, d: any) => this.handleDrag(event, d))
+          .on('end', (event: any, d: any) => {
+            if (d.data === this.selectedNode) {
+              // Final position save after drag ends
+              d.data.x = d.x;
+              d.data.y = d.y;
+
+              // Update the form with final values
+              const rootNodeControl = this.form.get('rootNode') as FormGroup;
+              if (rootNodeControl) {
+                this.updateNodeInFormStructure(rootNodeControl, d.data.id);
+              }
+            }
+          })
+      )
       .on('click', (_: Event, d: d3.HierarchyPointNode<TreeNode>) =>
         this.onNodeClick(d.data)
       );
 
     // Create foreignObject to embed HTML
-    const foreignObject = nodeGroup
+    nodeGroup
       .append('foreignObject')
       .attr('width', 120)
       .attr('height', 100)
@@ -282,7 +436,8 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .attr('y', -30);
 
     // Create HTML content
-    foreignObject
+    nodeGroup
+      .select('foreignObject')
       .append('xhtml:div')
       .attr('class', 'tree-node')
       .style('width', '100%')
@@ -352,109 +507,56 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     if (this.editedTree.rootNode) {
       this.onNodeClick(this.editedTree.rootNode);
     }
-  }
 
-  private createForkedLink(d: LinkData): string {
-    const parentX = d.source.x;
-    const parentY = d.source.y;
-    const childX = d.target.x;
-    const childY = d.target.y;
-
-    if (this.isVertical) {
-      // Vertical layout - links go down
-      const midY = (parentY + childY) / 2;
-      return `
-        M${parentX},${parentY}
-        V${midY}
-        H${childX}
-        V${childY}
-      `;
-    } else {
-      // Horizontal layout - links go right
-      const midX = (parentX + childX) / 2;
-      return `
-        M${parentX},${parentY}
-        H${midX}
-        V${childY}
-        H${childX}
-      `;
-    }
-  }
-
-  protected addNode(): void {
-    const parentId = this.selectedNode?.id;
-
-    if (!parentId) return;
-
-    if (!this.editedTree.rootNode) return;
-
-    const newNode: TreeNode = {
-      id: uuidv4(),
-      name: 'New Node',
-      description: '',
-      children: [],
-    };
-
-    const parentNode = this.findNode(this.editedTree.rootNode, parentId);
-    if (parentNode) {
-      if (!parentNode.children) {
-        parentNode.children = [];
-      }
-      parentNode.children.push(newNode);
-
-      // Update the form structure
-      if (this.selectedNode) {
-        const childFormArray = this.findChildFormArray(this.nodeForm, parentId);
-        if (childFormArray) {
-          childFormArray.push(this.createNodeFormGroup(newNode));
-        }
-      }
-
-      this.renderTree();
-    }
+    console.log(this.form.value);
   }
 
   private findChildFormArray(
     formGroup: FormGroup,
-    nodeId: string
-  ): FormArray | null {
-    // Check if the current form group represents the target node
-    const currentNodeId = this.findNodeIdForFormGroup(formGroup);
-    if (currentNodeId === nodeId) {
-      return formGroup.get('children') as FormArray;
-    }
-
-    // Get the children form array of the current form group
+    nodeId: string,
+    path: string[] = []
+  ): { formArray: FormArray; path: string[] } | null {
     const childrenArray = formGroup.get('children') as FormArray;
     if (!childrenArray) return null;
 
-    // Recursively search through all children
+    // Check each child in the current level
     for (let i = 0; i < childrenArray.length; i++) {
       const childFormGroup = childrenArray.at(i) as FormGroup;
-      const result = this.findChildFormArray(childFormGroup, nodeId);
+      const currentPath = [...path, i.toString()];
+
+      // Check if this is the parent we're looking for
+      const nodeData = this.findNodeByFormGroup(childFormGroup);
+      if (nodeData?.id === nodeId) {
+        return {
+          formArray: childFormGroup.get('children') as FormArray,
+          path: currentPath,
+        };
+      }
+
+      // Recursively search in children
+      const result = this.findChildFormArray(
+        childFormGroup,
+        nodeId,
+        currentPath
+      );
       if (result) return result;
     }
 
     return null;
   }
 
-  private findNodeIdForFormGroup(formGroup: FormGroup): string | null {
-    // Find the corresponding node in the tree structure based on the form group's values
-    const nameControl = formGroup.get('name');
-    const descriptionControl = formGroup.get('description');
+  private findNodeByFormGroup(formGroup: FormGroup): TreeNode | null {
+    const name = formGroup.get('name')?.value;
+    const description = formGroup.get('description')?.value;
 
-    const name = (nameControl?.value as string) || '';
-    const description = (descriptionControl?.value as string) || '';
-
-    // Search through the tree to find the matching node
-    const findNodeByValues = (node: TreeNode): string | null => {
+    const findNode = (node: TreeNode): TreeNode | null => {
       if (node.name === name && node.description === description) {
-        return node.id || null;
+        return node;
       }
 
       if (node.children) {
         for (const child of node.children) {
-          const result = findNodeByValues(child);
+          const result = findNode(child);
           if (result) return result;
         }
       }
@@ -462,26 +564,128 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       return null;
     };
 
-    return this.editedTree.rootNode
-      ? findNodeByValues(this.editedTree.rootNode)
-      : null;
+    return this.editedTree.rootNode ? findNode(this.editedTree.rootNode) : null;
+  }
+
+  protected addNode(): void {
+    const parentId = this.selectedNode?.id;
+
+    if (!parentId || !this.editedTree.rootNode) return;
+
+    // Find parent node's position in the D3 visualization
+    const parentElement = this.container
+      .selectAll('.node')
+      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data.id === parentId);
+
+    if (parentElement.empty()) return;
+
+    const parentData = parentElement.datum() as d3.HierarchyPointNode<TreeNode>;
+    const horizontalOffset = 200;
+
+    const newNode: TreeNode = {
+      id: uuidv4(),
+      name: 'New Node',
+      description: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      actions: [],
+      widgets: [],
+      children: [],
+      x: parentData.x + horizontalOffset,
+      y: parentData.y,
+    };
+
+    // Update the tree data structure
+    const parentNode = this.findNode(this.editedTree.rootNode, parentId);
+    if (parentNode) {
+      if (!parentNode.children) {
+        parentNode.children = [];
+      }
+      parentNode.children.push(newNode);
+
+      // Update the form structure by recreating the entire rootNode form
+      const updatedRootNode = _.cloneDeep(this.editedTree.rootNode);
+      this.form.setControl(
+        'rootNode',
+        this.createNodeFormGroup(updatedRootNode)
+      );
+
+      // Re-render the tree
+      this.renderTree();
+
+      // After rendering, explicitly select the new node
+      setTimeout(() => {
+        this.onNodeClick(newNode);
+
+        // Find and scroll to the new node
+        const newNodeElement = this.container
+          .selectAll('.node')
+          .filter(
+            (d: d3.HierarchyPointNode<TreeNode>) => d.data.id === newNode.id
+          );
+
+        if (!newNodeElement.empty()) {
+          const transform = d3.zoomTransform(this.svg.node());
+          const nodeData = newNodeElement.datum();
+          const scale = transform.k;
+
+          // Calculate the position to center the new node
+          const x = -nodeData.x * scale + this.width / 2;
+          const y = -nodeData.y * scale + this.height / 2;
+
+          // Smoothly transition to the new node
+          this.svg
+            .transition()
+            .duration(750)
+            .call(
+              this.zoom.transform,
+              d3.zoomIdentity.translate(x, y).scale(scale)
+            );
+        }
+      }, 0);
+    }
   }
 
   protected removeNode(): void {
     const nodeId = this.selectedNode?.id;
-    if (!nodeId) return;
+    if (!nodeId || !this.editedTree.rootNode) return;
 
-    if (!this.editedTree.rootNode) return;
-
-    const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
-    if (parentNode) {
-      if (parentNode.children) {
-        parentNode.children = parentNode.children.filter(
-          (child: TreeNode) => child.id !== nodeId
-        );
-        this.renderTree();
-      }
+    // Don't allow removing the root node
+    if (nodeId === this.editedTree.rootNode.id) {
+      return;
     }
+
+    // Find the parent node in the tree structure
+    const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
+    if (parentNode && parentNode.children) {
+      // Store the parent node before removing the selected node
+      const parentToSelect = parentNode;
+
+      // Remove the node from the children array
+      parentNode.children = parentNode.children.filter(
+        (child: TreeNode) => child.id !== nodeId
+      );
+
+      // Update the form structure by recreating the entire rootNode form
+      const updatedRootNode = _.cloneDeep(this.editedTree.rootNode);
+      this.form.setControl(
+        'rootNode',
+        this.createNodeFormGroup(updatedRootNode)
+      );
+
+      // Re-render the tree
+      this.renderTree();
+
+      // Select the parent node after removal
+      setTimeout(() => {
+        this.onNodeClick(parentToSelect);
+      }, 0);
+
+      // Close the delete dialog if it's open
+      this.deleteDialogVisible = false;
+    }
+
+    console.log(this.form.value);
   }
 
   private findNode(node: TreeRootNode | TreeNode, id: string): TreeNode | null {
@@ -521,12 +725,41 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   }
 
   protected onSubmitNodeForm(): void {
-    if (!this.selectedNode || !this.nodeForm.valid) return;
+    if (!this.selectedNode || !this.form.valid) return;
 
-    const formValue = this.nodeForm.value;
-    this.selectedNode.name = formValue.name;
-    this.selectedNode.description = formValue.description;
+    const rootNodeControl = this.form.get('rootNode') as FormGroup;
+    if (!rootNodeControl) return;
+
+    // Find and update the selected node in the form structure
+    this.updateNodeInFormStructure(rootNodeControl, this.selectedNode.id ?? '');
+
     this.renderTree();
+  }
+
+  private updateNodeInFormStructure(
+    formGroup: FormGroup,
+    nodeId: string
+  ): boolean {
+    if (formGroup.get('id')?.value === nodeId) {
+      // Update the node's position
+      formGroup.patchValue({
+        x: (this.selectedNode?.x || 0).toString(),
+        y: (this.selectedNode?.y || 0).toString(),
+      });
+      return true;
+    }
+
+    const childrenArray = formGroup.get('children') as FormArray;
+    if (!childrenArray) return false;
+
+    for (let i = 0; i < childrenArray.length; i++) {
+      const childGroup = childrenArray.at(i) as FormGroup;
+      if (this.updateNodeInFormStructure(childGroup, nodeId)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   protected addWidget(widgetType: string): void {
@@ -584,6 +817,9 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // Store current transform before making changes
     const currentTransform = d3.zoomTransform(this.svg.node());
 
+    // Update isRootNode status
+    this.isRootNode = selectedNode.id === this.editedTree.rootNode?.id;
+
     // Hide all connection points and lines first
     this.container.selectAll('.connection-group').style('display', 'none');
 
@@ -612,7 +848,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     selectedNodeElement
       .select('foreignObject')
       .select('.tree-node')
-      .select('div') // This selects the icon container
+      .select('div')
       .classed('selected', true)
       .classed('border-gray-400', false)
       .classed('border-emerald-500', true)
@@ -620,12 +856,114 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
       .classed('shadow-md', true)
       .style('border-width', '2px');
 
-    // Restore the transform to maintain position
-    this.container.attr('transform', currentTransform);
+    // Update cursor and drag behavior based on selection
+    this.container
+      .selectAll('.node')
+      .select('foreignObject')
+      .select('.tree-node')
+      .select('div')
+      .style('cursor', (d: any) =>
+        d.data === selectedNode ? 'move' : 'pointer'
+      );
 
+    // Get the selected node's position and create a smooth transition
+    const nodeData =
+      selectedNodeElement.datum() as d3.HierarchyPointNode<TreeNode>;
+    if (nodeData) {
+      const scale = currentTransform.k; // Maintain current zoom level
+
+      // Calculate the position to center the selected node
+      const x = -nodeData.x * scale + this.width / 2;
+      const y = -nodeData.y * scale + this.height / 2;
+
+      // Smoothly transition to the selected node
+      this.svg
+        .transition()
+        .duration(750) // Match the duration used in addNode
+        .ease(d3.easeCubicInOut) // Add smooth easing
+        .call(
+          this.zoom.transform,
+          d3.zoomIdentity.translate(x, y).scale(scale)
+        );
+    }
+
+    // Update both selected and highlighted nodes
     this.selectedNode = selectedNode;
-    this.nodeForm = this.createNodeFormGroup(selectedNode);
+    this.highlightedNode = selectedNode;
+
+    // Find and select the corresponding node in the form structure
+    const rootNodeControl = this.form.get('rootNode') as FormGroup;
+    if (rootNodeControl) {
+      this.selectNodeInFormStructure(
+        rootNodeControl,
+        this.selectedNode.id ?? ''
+      );
+    }
+
     this.sidebarVisible = true;
+  }
+
+  private selectNodeInFormStructure(
+    formGroup: FormGroup,
+    nodeId: string
+  ): boolean {
+    if (formGroup.get('id')?.value === nodeId) {
+      // Node found, update form values
+      formGroup.patchValue({
+        name: this.selectedNode?.name,
+        description: this.selectedNode?.description,
+        createdAt: this.selectedNode?.createdAt || new Date(),
+        updatedAt: this.selectedNode?.updatedAt || new Date(),
+        archivedAt: this.selectedNode?.archivedAt,
+        createdBy: this.selectedNode?.createdBy,
+        updatedBy: this.selectedNode?.updatedBy,
+        archivedBy: this.selectedNode?.archivedBy,
+        actions: this.selectedNode?.actions || [],
+        widgets: this.selectedNode?.widgets || [],
+        x: this.selectedNode?.x || 0,
+        y: this.selectedNode?.y || 0,
+      });
+      return true;
+    }
+
+    const childrenArray = formGroup.get('children') as FormArray;
+    if (!childrenArray) return false;
+
+    for (let i = 0; i < childrenArray.length; i++) {
+      const childGroup = childrenArray.at(i) as FormGroup;
+      if (this.selectNodeInFormStructure(childGroup, nodeId)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Update drag event handler
+  private handleDrag(event: any, d: any): void {
+    if (d.data === this.selectedNode) {
+      event.sourceEvent.stopPropagation();
+      // Update node position
+      d.x = event.x;
+      d.y = event.y;
+      // Save position to node data
+      d.data.x = event.x;
+      d.data.y = event.y;
+      // Update node transform
+      d3.select(event.sourceEvent.target.closest('.node')).attr(
+        'transform',
+        `translate(${d.x},${d.y})`
+      );
+
+      // Update the form values in real-time
+      const rootNodeControl = this.form.get('rootNode') as FormGroup;
+      if (rootNodeControl) {
+        this.updateNodeInFormStructure(rootNodeControl, d.data.id);
+      }
+
+      // Update links
+      this.updateLinks();
+    }
   }
 
   protected zoomIn(): void {
@@ -684,15 +1022,34 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     // To be implemented
   }
 
-  protected save(): void {}
+  protected save(): void {
+    // Save positions before saving the tree
+    if (this.editedTree.rootNode) {
+      this.saveNodePositions(this.editedTree.rootNode);
+    }
+
+    if (this.form.valid) {
+      const treeData = this.form.value;
+      this.store.createTree(treeData);
+      this.router.navigate(['/tree']);
+    }
+  }
 
   protected export(): void {
     // Create a copy of the tree data without any circular references
     const treeData = {
+      _id: this.editedTree._id,
       name: this.editedTree.name,
       description: this.editedTree.description,
-      icon: this.editedTree.icon,
       status: this.editedTree.status,
+      permissions: this.editedTree.permissions,
+      createdAt: this.editedTree.createdAt,
+      updatedAt: this.editedTree.updatedAt,
+      archivedAt: this.editedTree.archivedAt,
+      createdBy: this.editedTree.createdBy,
+      updatedBy: this.editedTree.updatedBy,
+      archivedBy: this.editedTree.archivedBy,
+      icon: this.editedTree.icon,
       rootNode: this.editedTree.rootNode,
     };
 
@@ -735,5 +1092,42 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
 
   protected goBack(): void {
     this.router.navigate(['/tree']);
+  }
+
+  private saveNodePositions(node: TreeNode) {
+    // Recursively save positions for all nodes
+    const savePositionsRecursive = (currentNode: TreeNode) => {
+      if (currentNode.children) {
+        currentNode.children.forEach((child) => {
+          // Find the node's position in the D3 visualization
+          const nodeElement = this.container
+            .selectAll('.node')
+            .filter((d: any) => d.data.id === child.id);
+
+          if (!nodeElement.empty()) {
+            const nodeData =
+              nodeElement.datum() as d3.HierarchyPointNode<TreeNode>;
+            child.x = nodeData.x;
+            child.y = nodeData.y;
+
+            // Update the form if this is the currently selected node
+            if (this.selectedNode && this.selectedNode.id === child.id) {
+              this.form.patchValue(
+                {
+                  x: child.x,
+                  y: child.y,
+                },
+                { emitEvent: false }
+              );
+            }
+
+            // Recursively save positions for children
+            savePositionsRecursive(child);
+          }
+        });
+      }
+    };
+
+    savePositionsRecursive(node);
   }
 }

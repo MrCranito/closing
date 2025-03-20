@@ -63,6 +63,8 @@ export interface TreeNode {
   widgets?: NodeWidget[];
   actions?: NodeAction[];
   children?: TreeNode[];
+  x?: number;
+  y?: number;
 }
 
 export interface NodeWidget {
