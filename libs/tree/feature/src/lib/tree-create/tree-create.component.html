@@ -9,7 +9,7 @@
     >
       <div class="flex items-center space-x-2">
         <p-button
-          icon="pi pi-chevron-circle-left"
+          icon="fas fa-chevron-circle-left"
           [rounded]="true"
           [text]="true"
           [pTooltip]="'Back'"
@@ -21,10 +21,10 @@
         <form [formGroup]="form">
           <input
             pInputText
-            type="text"
-            class="p-inputtext-sm"
+            id="on_name"
             formControlName="name"
-            placeholder="New tree title"
+            placeholder="Title..."
+            autocomplete="off"
           />
         </form>
       </div>
@@ -45,7 +45,7 @@
         >
         </p-button>
         <p-button
-          icon="pi pi-save"
+          icon="fas fa-save"
           [size]="'small'"
           [pTooltip]="'Save'"
           [tooltipPosition]="'top'"
@@ -54,7 +54,16 @@
           (onClick)="save()"
         />
         <p-button
-          icon="pi pi-trash"
+          icon="fas fa-undo"
+          [size]="'small'"
+          [pTooltip]="'Reset'"
+          [tooltipPosition]="'top'"
+          severity="secondary"
+          [disabled]="!isEqual"
+          (onClick)="resetTree()"
+        />
+        <p-button
+          icon="fas fa-trash"
           [size]="'small'"
           [pTooltip]="'Delete'"
           [tooltipPosition]="'top'"
@@ -67,11 +76,12 @@
 
       <div class="flex items-center">
         <p-button
-          icon="pi pi-sparkles"
+          icon="fas fa-robot"
           severity="help"
           [size]="'small'"
           [pTooltip]="'AI Beta'"
           [tooltipPosition]="'top'"
+          [disabled]="true"
           (onClick)="openAIChat()"
         />
       </div>
@@ -83,46 +93,44 @@
     >
       <div class="flex flex-col space-y-2">
         <!-- Node Actions -->
-        <div class="flex items-center space-x-2">
-          <span class="text-xs text-gray-500 font-medium w-14">Actions</span>
-          <div class="flex space-x-2">
-            <p-button
-              icon="pi pi-plus"
-              severity="secondary"
-              [size]="'small'"
-              [pTooltip]="'Add Node'"
-              [tooltipPosition]="'left'"
-              (onClick)="addNode()"
-              [disabled]="!selectedNode"
-            />
-            <p-button
-              #widgetBtn
-              icon="pi pi-th-large"
-              severity="secondary"
-              [size]="'small'"
-              [pTooltip]="'Add Widget'"
-              [tooltipPosition]="'left'"
-              [disabled]="!selectedNode"
-              (click)="widgetMenu.toggle($event)"
-            />
-            <p-button
-              icon="pi pi-bolt"
-              severity="secondary"
-              [size]="'small'"
-              [pTooltip]="'Add Action'"
-              [tooltipPosition]="'left'"
-              [disabled]="!selectedNode"
-            />
-            <p-button
-              icon="pi pi-trash"
-              [size]="'small'"
-              [pTooltip]="'Delete'"
-              [tooltipPosition]="'left'"
-              severity="secondary"
-              [disabled]="!selectedNode || isRootNode"
-              (onClick)="removeNode()"
-            />
-          </div>
+        <div class="flex space-x-2">
+          <p-button
+            icon="fas fa-plus"
+            severity="secondary"
+            [size]="'small'"
+            [pTooltip]="'Add Node'"
+            [tooltipPosition]="'left'"
+            (onClick)="addNode()"
+            [disabled]="!selectedNode"
+          />
+          <p-button
+            #widgetBtn
+            icon="fas fa-th-large"
+            severity="secondary"
+            [size]="'small'"
+            [pTooltip]="'Add Widget'"
+            [tooltipPosition]="'left'"
+            [disabled]="!selectedNode"
+            (click)="widgetMenu.toggle($event)"
+          />
+          <p-button
+            icon="fas fa-bolt"
+            severity="secondary"
+            [size]="'small'"
+            [pTooltip]="'Add Automatique Action'"
+            [tooltipPosition]="'left'"
+            [disabled]="!selectedNode"
+            (click)="actionMenu.toggle($event)"
+          />
+          <p-button
+            icon="fas fa-trash"
+            [size]="'small'"
+            [pTooltip]="'Delete'"
+            [tooltipPosition]="'left'"
+            severity="secondary"
+            [disabled]="!selectedNode || isRootNode"
+            (onClick)="removeNode()"
+          />
         </div>
       </div>
     </div>
@@ -134,29 +142,36 @@
       [appendTo]="'body'"
     ></p-menu>
 
+    <p-menu
+      #actionMenu
+      [popup]="true"
+      [model]="actionItems"
+      [appendTo]="'body'"
+    ></p-menu>
+
     <!-- Zoom Buttons -->
     <div
       class="absolute bottom-0 right-0 rounded-lg space-x-2 bg-white shadow-lg dark:bg-gray-900 border-gray-200 dark:border-gray-700 p-2"
     >
       <i
-        class="pi pi-plus cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
+        class="fas fa-plus cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
         [pTooltip]="'Zoom In'"
         [tooltipPosition]="'top'"
-        style="font-size: 0.8rem"
+        style="font-size: 0.7rem"
         (click)="zoomIn()"
       ></i>
       <i
-        class="pi pi-minus cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
+        class="fas fa-minus cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
         [pTooltip]="'Zoom Out'"
         [tooltipPosition]="'top'"
-        style="font-size: 0.8rem"
+        style="font-size: 0.7rem"
         (click)="zoomOut()"
       ></i>
       <i
-        class="pi pi-refresh cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
+        class="fas fa-sync cursor-pointer text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded-lg"
         [pTooltip]="'Rotate'"
         [tooltipPosition]="'top'"
-        style="font-size: 0.8rem"
+        style="font-size: 0.7rem"
         (click)="rotate()"
       ></i>
     </div>

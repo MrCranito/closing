@@ -100,43 +100,205 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
 
   protected widgetItems: MenuItem[] = [
     {
-      label: 'File',
-      icon: 'pi pi-file-plus',
-      command: () => this.addFileToNode(),
+      label: 'Inputs',
+      icon: 'fas fa-keyboard',
+      items: [
+        {
+          label: 'File',
+          icon: 'fas fa-file-plus',
+          command: () => this.addFileToNode(),
+        },
+        {
+          label: 'Form',
+          icon: 'fas fa-file-lines',
+          command: () => this.addFormToNode(),
+        },
+        {
+          label: 'Date Picker',
+          icon: 'fas fa-calendar',
+          command: () => this.addDatePickerToNode(),
+        },
+        {
+          label: 'Checklist',
+          icon: 'fas fa-list-check',
+          command: () => this.addChecklistToNode(),
+        },
+      ],
     },
     {
-      label: 'Todo List',
-      icon: 'fas fa-list-check',
-      command: () => this.addTodoListToNode(),
+      label: 'Communication',
+      icon: 'fas fa-comments',
+      items: [
+        {
+          label: 'Comments',
+          icon: 'fas fa-comment-dots',
+          command: () => this.addCommentsToNode(),
+        },
+      ],
     },
     {
-      label: 'Form',
-      icon: 'fas fa-file-lines',
-      command: () => this.addFormToNode(),
+      label: 'External Content',
+      icon: 'fas fa-globe',
+      items: [
+        {
+          label: 'Embedded Link',
+          icon: 'fas fa-link',
+          command: () => this.addEmbeddedLinkToNode(),
+        },
+        {
+          label: 'Google Maps Place',
+          icon: 'fas fa-map-location-dot',
+          command: () => this.addGoogleMapsPlaceToNode(),
+        },
+      ],
     },
   ];
 
-  protected tree: Partial<Tree> = {
-    _id: uuidv4(),
-    name: 'Tree Node Default',
-    description: 'A default tree node structure',
-    status: TreeStatus.ACTIVE,
-    permissions: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    icon: 'fa-project-diagram',
-    rootNode: {
+  protected actionItems: MenuItem[] = [
+    {
+      label: 'Basic',
+      icon: 'fas fa-cube',
+      items: [
+        {
+          label: 'Send Email',
+          icon: 'fas fa-envelope',
+          command: () => this.addAction('email'),
+        },
+      ],
+    },
+    {
+      label: 'HubSpot',
+      icon: 'fas fa-building',
+      items: [
+        {
+          label: 'Create Prospect',
+          icon: 'fas fa-user-plus',
+          command: () => this.addAction('hubspot_prospect'),
+        },
+        {
+          label: 'Update Deal Stage',
+          icon: 'fas fa-chart-line',
+          command: () => this.addAction('hubspot_update_deal'),
+        },
+      ],
+    },
+    {
+      label: 'Salesforce',
+      icon: 'fas fa-cloud',
+      items: [
+        {
+          label: 'Create Lead',
+          icon: 'fas fa-user-plus',
+          command: () => this.addAction('salesforce_create_lead'),
+        },
+        {
+          label: 'Update Opportunity',
+          icon: 'fas fa-chart-line',
+          command: () => this.addAction('salesforce_update_opportunity'),
+        },
+      ],
+    },
+    {
+      label: 'Teams',
+      icon: 'fas fa-users',
+      items: [
+        {
+          label: 'Send Message',
+          icon: 'fas fa-envelope',
+          command: () => this.addAction('team_message'),
+        },
+      ],
+    },
+    {
+      label: 'Slack',
+      icon: 'fab fa-slack',
+      items: [
+        {
+          label: 'Send Notification',
+          icon: 'fas fa-bell',
+          command: () => this.addAction('slack_notification'),
+        },
+      ],
+    },
+    {
+      label: 'WhatsApp',
+      icon: 'fab fa-whatsapp',
+      items: [
+        {
+          label: 'Send WhatsApp Message',
+          icon: 'fas fa-comment',
+          command: () => this.addAction('whatsapp_message'),
+        },
+      ],
+    },
+    {
+      label: 'Google Calendar',
+      icon: 'fas fa-calendar',
+      items: [
+        {
+          label: 'Schedule Meeting',
+          icon: 'fas fa-clock',
+          command: () => this.addAction('google_calendar_meeting'),
+        },
+      ],
+    },
+    {
+      label: 'DocuSign',
+      icon: 'fas fa-file-signature',
+      items: [
+        {
+          label: 'Send Contract',
+          icon: 'fas fa-file-pdf',
+          command: () => this.addAction('docusign_send_contract'),
+        },
+      ],
+    },
+    {
+      label: 'Stripe',
+      icon: 'fab fa-stripe',
+      items: [
+        {
+          label: 'Create Invoice',
+          icon: 'fas fa-file-invoice',
+          command: () => this.addAction('stripe_create_invoice'),
+        },
+        {
+          label: 'Process Payment',
+          icon: 'fas fa-credit-card',
+          command: () => this.addAction('stripe_process_payment'),
+        },
+      ],
+    },
+  ];
+
+  protected form: FormGroup = this.formBuilder.group({
+    _id: [uuidv4(), [Validators.required]],
+    name: ['', [Validators.required, Validators.minLength(3)]],
+    description: ['A default tree node structure'],
+    status: [TreeStatus.ACTIVE],
+    permissions: [[]],
+    createdAt: [new Date()],
+    updatedAt: [new Date()],
+    archivedAt: [null],
+    createdBy: [null],
+    updatedBy: [null],
+    archivedBy: [null],
+    icon: ['fa-project-diagram'],
+    rootNode: this.createNodeFormGroup({
       id: uuidv4(),
       name: 'Root Node',
       description: 'A default root node structure',
+      actions: [],
+      widgets: [],
       children: [],
-    },
-  };
-  protected editedTree: Partial<Tree> = _.cloneDeep(this.tree);
+    }),
+  });
+
+  protected editedTree: Partial<Tree> = _.cloneDeep(this.form.value);
   protected editMode: boolean = false;
 
   protected get isEqual(): boolean {
-    return _.isEqual(this.editedTree, this.tree);
+    return _.isEqual(this.editedTree, this.form.value);
   }
 
   protected sidebarVisible: boolean = false;
@@ -157,34 +319,6 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
   private isVertical = false;
   private drag: any;
   private highlightedNode: TreeNode | null = null;
-
-  protected form: FormGroup = this.formBuilder.group({
-    _id: [this.editedTree._id || uuidv4()],
-    name: [
-      this.editedTree.name,
-      [Validators.required, Validators.minLength(3)],
-    ],
-    description: [this.editedTree.description || ''],
-    status: [this.editedTree.status || TreeStatus.ACTIVE],
-    permissions: [this.editedTree.permissions || []],
-    createdAt: [this.editedTree.createdAt || new Date()],
-    updatedAt: [this.editedTree.updatedAt || new Date()],
-    archivedAt: [this.editedTree.archivedAt],
-    createdBy: [this.editedTree.createdBy],
-    updatedBy: [this.editedTree.updatedBy],
-    archivedBy: [this.editedTree.archivedBy],
-    icon: [this.editedTree.icon || 'fa-project-diagram'],
-    rootNode: this.createNodeFormGroup(
-      this.editedTree.rootNode || {
-        id: uuidv4(),
-        name: 'Root Node',
-        description: 'A default root node structure',
-        actions: [],
-        widgets: [],
-        children: [],
-      }
-    ),
-  });
 
   ngOnInit(): void {
     this.form.get('name')?.valueChanges.subscribe(() => {
@@ -461,7 +595,7 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
         // Add icon to container
         iconContainer
           .append('i')
-          .attr('class', 'pi pi-folder text-emerald-500')
+          .attr('class', 'fas fa-folder text-emerald-500')
           .style('font-size', '24px');
 
         // Add name below container
@@ -778,13 +912,18 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     this.renderTree();
   }
 
-  protected addAction(): void {
+  protected addAction(actionType: string = 'button'): void {
     if (!this.selectedNode) return;
 
     const action: NodeAction = {
       id: uuidv4(),
-      name: 'New Action',
-      type: 'button',
+      name:
+        actionType === 'email'
+          ? 'Send Email'
+          : actionType === 'hubspot_prospect'
+          ? 'Create Prospect'
+          : 'New Action',
+      type: actionType,
       config: {},
     };
 
@@ -1006,15 +1145,35 @@ export class TreeCreateComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/tree']);
   }
 
-  protected deleteNode(): void {
-    // To be implemented
-  }
-
   protected openAIChat(): void {
     // To be implemented
   }
 
   protected undo(): void {
+    // To be implemented
+  }
+
+  protected addDatePickerToNode(): void {
+    // To be implemented
+  }
+
+  protected addChecklistToNode(): void {
+    // To be implemented
+  }
+
+  protected addEmbeddedLinkToNode(): void {
+    // To be implemented
+  }
+
+  protected addGoogleMapsPlaceToNode(): void {
+    // To be implemented
+  }
+
+  protected addCommentsToNode(): void {
+    // To be implemented
+  }
+
+  protected addProspectInfoToNode(): void {
     // To be implemented
   }
 
