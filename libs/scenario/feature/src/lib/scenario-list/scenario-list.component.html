@@ -75,12 +75,12 @@
   </ng-template>
 </p-table>
 
-<ng-template #treeTemplate let-scenario>
+<ng-template #diagramTemplate let-scenario>
   <p-button
-    [label]="scenario.treeName"
+    [label]="scenario.diagramName"
     severity="secondary"
     size="small"
-    (onClick)="goToTree(scenario.treeId)"
+    (onClick)="goToDiagram(scenario.diagramId)"
   ></p-button>
 </ng-template>
 

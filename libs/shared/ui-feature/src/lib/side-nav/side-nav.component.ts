@@ -36,9 +36,9 @@ export class SideNavComponent {
       routerLink: MainNavigationRoutes.Dashboard,
     },
     {
-      label: 'Trees',
+      label: 'Diagrams',
       icon: 'pi pi-sitemap',
-      routerLink: MainNavigationRoutes.Tree,
+      routerLink: MainNavigationRoutes.Diagram,
     },
     {
       label: 'Scenarios',
@@ -65,8 +65,8 @@ export class SideNavComponent {
     this.router.navigate(['/auth']);
   }
 
-  navigateToTreeEdit(): void {
-    this.router.navigate(['/tree-edit']);
+  navigateToDiagramEdit(): void {
+    this.router.navigate(['/diagram-edit']);
   }
 
   navigateToLanding(): void {

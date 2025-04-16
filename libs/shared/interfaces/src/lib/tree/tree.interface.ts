@@ -1,6 +1,58 @@
 import { TemplateRef } from '@angular/core';
 import { User } from '../user/user.interface';
 
+export interface Diagram {
+  _id: string;
+  name: string;
+  description?: string;
+  status: DiagramStatus;
+  permissions?: DiagramPermissions[];
+  createdAt: Date;
+  updatedAt: Date;
+  rootNode: DiagramRootNode;
+}
+
+export interface DiagramPermissions {
+  userId: string;
+  level: DiagramPermissionLevel;
+}
+
+export enum DiagramPermissionLevel {
+  READ = 'READ',
+  WRITE = 'WRITE',
+  ADMIN = 'ADMIN',
+}
+
+export enum DiagramStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED',
+}
+
+export interface DiagramRootNode {
+  _id: string;
+  name: string;
+  type: string;
+  data?: Record<string, unknown>;
+  position: {
+    x: number;
+    y: number;
+  };
+  children?: DiagramNode[];
+}
+
+export interface DiagramNode {
+  _id: string;
+  name: string;
+  type: string;
+  data?: Record<string, unknown>;
+  position: {
+    x: number;
+    y: number;
+  };
+  children?: DiagramNode[];
+}
+
 export interface Tree {
   _id?: string;
   name: string;

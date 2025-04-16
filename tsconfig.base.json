@@ -42,9 +42,9 @@
       "@closing/shared/interfaces": ["libs/shared/interfaces/src/index.ts"],
       "@closing/shared/ui-feature": ["libs/shared/ui-feature/src/index.ts"],
       "@closing/shared/utils": ["libs/shared/utils/src/index.ts"],
-      "@closing/tree/data-access": ["libs/tree/data-access/src/index.ts"],
-      "@closing/tree/feature": ["libs/tree/feature/src/index.ts"],
-      "@closing/tree/feature-shell": ["libs/tree/feature-shell/src/index.ts"],
+      "@closing/diagram/data-access": ["libs/diagram/data-access/src/index.ts"],
+      "@closing/diagram/feature": ["libs/diagram/feature/src/index.ts"],
+      "@closing/diagram/feature-shell": ["libs/diagram/feature-shell/src/index.ts"],
       "@closing/scenario/data-access": ["libs/scenario/data-access/src/index.ts"],
       "@closing/scenario/feature": ["libs/scenario/feature/src/index.ts"],
       "@closing/scenario/feature-shell": [

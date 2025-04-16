@@ -65,6 +65,7 @@ export class ScenarioListComponent implements AfterViewInit {
   private avatarTemplate = viewChild<TemplateRef<unknown>>('avatarTemplate');
   private statusTemplate = viewChild<TemplateRef<unknown>>('statusTemplate');
   private defaultTemplate = viewChild<TemplateRef<unknown>>('defaultTemplate');
+  private diagramTemplate = viewChild<TemplateRef<unknown>>('diagramTemplate');
 
   protected columns: Column[] = [];
 
@@ -104,6 +105,11 @@ export class ScenarioListComponent implements AfterViewInit {
         sortable: true,
         filterable: true,
       },
+      {
+        field: 'diagramName',
+        header: 'Diagram',
+        template: this.diagramTemplate(),
+      },
     ];
   }
 
@@ -111,8 +117,8 @@ export class ScenarioListComponent implements AfterViewInit {
     this.router.navigate(['/scenarios/create']);
   }
 
-  goToTree(treeId: string) {
-    this.router.navigate(['/trees', treeId]);
+  goToDiagram(diagramId: string) {
+    this.router.navigate(['/diagrams', diagramId]);
   }
 
   onLazyLoad(event: TableLazyLoadEvent) {

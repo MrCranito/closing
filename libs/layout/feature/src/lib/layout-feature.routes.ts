@@ -3,8 +3,7 @@ import { AuthGuard } from '@closing/shared/utils';
 import { AuthStore } from '@closing/shared/data-access';
 import { MainNavigationRoutes } from '@closing/shared/interfaces';
 import { UsersStore } from '@closing/users/data-access';
-import { TreeStore } from '@closing/tree/data-access';
-import { ScenarioStore } from '@closing/scenario/data-access';
+import { DiagramStore } from '@closing/diagram/data-access';
 
 export const routes: Route[] = [
   {
@@ -22,18 +21,18 @@ export const routes: Route[] = [
         providers: [AuthStore],
       },
       {
-        path: MainNavigationRoutes.Tree,
+        path: MainNavigationRoutes.Diagram,
         loadChildren: () =>
-          import('@closing/tree/feature-shell').then((m) => m.routes),
+          import('@closing/diagram/feature-shell').then((m) => m.routes),
         canActivate: [AuthGuard],
-        providers: [AuthStore, TreeStore],
+        providers: [AuthStore, DiagramStore],
       },
       {
         path: MainNavigationRoutes.Scenario,
         loadChildren: () =>
           import('@closing/scenario/feature-shell').then((m) => m.routes),
         canActivate: [AuthGuard],
-        providers: [AuthStore, ScenarioStore],
+        providers: [AuthStore, DiagramStore],
       },
       {
         path: MainNavigationRoutes.Users,
@@ -41,6 +40,13 @@ export const routes: Route[] = [
           import('@closing/users/feature-shell').then((m) => m.routes),
         canActivate: [AuthGuard],
         providers: [AuthStore, UsersStore],
+      },
+      {
+        path: MainNavigationRoutes.Diagram,
+        loadChildren: () =>
+          import('@closing/diagram/feature-shell').then((m) => m.routes),
+        canActivate: [AuthGuard],
+        providers: [AuthStore, DiagramStore],
       },
     ],
   },

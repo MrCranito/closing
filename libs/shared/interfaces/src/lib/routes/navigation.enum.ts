@@ -1,6 +1,6 @@
 export enum MainNavigationRoutes {
   Dashboard = '',
-  Tree = 'tree',
+  Diagram = 'diagram',
   Scenario = 'scenario',
   Users = 'users',
   Teams = 'teams',

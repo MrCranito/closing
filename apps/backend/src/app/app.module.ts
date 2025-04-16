@@ -6,7 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import appConfig from './config/app.config';
 import { AuthModule } from '../modules/auth/auth.module';
 import { CompanyModule } from '../modules/company/company.module';
-import { TreeModule } from '../modules/tree/tree.module';
+import { DiagramModule } from '../modules/diagram/diagram.module';
 import { CustomersModule } from '../modules/customers/customer.module';
 import { ScenariosModule } from '../modules/scenarios/scenarios.module';
 
@@ -51,7 +51,7 @@ const typeOrmModuleConfig: TypeOrmModuleOptions = {
     UsersModule,
     AuthModule,
     CompanyModule,
-    TreeModule,
+    DiagramModule,
     CustomersModule,
     ScenariosModule,
   ],

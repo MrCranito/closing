@@ -41,7 +41,10 @@ export const ScenarioStore = signalStore(
             patchState(
               store,
               { loading: false, total: response.total },
-              addEntities(response.items, { collection: 'scenarios' })
+              addEntities(response.items, {
+                collection: 'scenarios',
+                selectId: (scenario) => scenario._id,
+              })
             ),
           error: (error) =>
             patchState(store, { error: error as string, loading: false }),
