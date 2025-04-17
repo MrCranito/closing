@@ -1,7 +1,35 @@
 <div class="h-full">
   <div class="flex flex-col h-full">
     <div class="flex-grow border-gray-200 dark:border-gray-700">
-      <div class="card h-full w-full" #diagramContainer></div>
+      <div class="card h-full w-full relative" #diagramContainer>
+        <!-- Dot Background + Zoomable Layer -->
+        <svg #svg class="absolute inset-0 w-full h-full z-0 select-none">
+          <defs>
+            <pattern
+              id="dot-grid"
+              x="0"
+              y="0"
+              width="20"
+              height="20"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="1" cy="1" r="1" fill="#444" />
+            </pattern>
+          </defs>
+
+          <!-- Background layer with dot pattern -->
+          <rect
+            #backgroundLayer
+            width="100%"
+            height="100%"
+            fill="url(#dot-grid)"
+          />
+          <!-- All draggable content lives inside this group -->
+          <g #zoomLayer>
+            <!-- Your dynamic nodes/links/groups will be appended here by D3 -->
+          </g>
+        </svg>
+      </div>
     </div>
 
     <div
@@ -82,7 +110,6 @@
           [pTooltip]="'AI Beta'"
           [tooltipPosition]="'top'"
           [disabled]="true"
-          (onClick)="openAIChat()"
         />
       </div>
     </div>

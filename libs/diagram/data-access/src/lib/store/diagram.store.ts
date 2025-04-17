@@ -18,13 +18,13 @@ import { inject } from '@angular/core';
 import { pipe, tap, switchMap, map } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { withTableRequest } from '@closing/shared/data-access';
-import { Tree } from '@closing/shared/interfaces';
+import { Diagram } from '@closing/shared/interfaces';
 import { DiagramService } from '../services/diagram.service';
 
 export const DiagramStore = signalStore(
   withState({ loading: false, error: '', total: 0, selectedDiagram: null }),
   withEntities({
-    entity: type<Tree>(),
+    entity: type<Diagram>(),
     collection: 'diagrams',
   }),
   withTableRequest({ name: 'diagrams' }),
@@ -47,6 +47,7 @@ export const DiagramStore = signalStore(
         ),
         tapResponse({
           next: (response) => {
+            console.log(response);
             patchState(
               store,
               { loading: false, total: response.total },
@@ -55,15 +56,13 @@ export const DiagramStore = signalStore(
                 selectId: (diagram) => diagram._id ?? '',
               })
             );
-
-            console.log(store.diagramsEntities());
           },
           error: (error) =>
             patchState(store, { error: error as string, loading: false }),
         })
       )
     ),
-    createDiagram: rxMethod<Partial<Tree>>(
+    createDiagram: rxMethod<Partial<Diagram>>(
       pipe(
         switchMap((diagram) => service.create(diagram)),
         tapResponse({
@@ -84,7 +83,7 @@ export const DiagramStore = signalStore(
         })
       )
     ),
-    updateDiagram: rxMethod<Tree>(
+    updateDiagram: rxMethod<Diagram>(
       pipe(
         switchMap((diagram) => service.update(diagram)),
         tapResponse({

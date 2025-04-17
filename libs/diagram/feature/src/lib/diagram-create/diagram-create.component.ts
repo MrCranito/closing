@@ -9,10 +9,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  TreeNode,
-  Tree,
-  TreeStatus,
-  TreeRootNode,
+  DiagramNode,
+  Diagram,
+  DiagramStatus,
+  DiagramRootNode,
   NodeAction,
   NodeWidget,
 } from '@closing/shared/interfaces';
@@ -43,8 +43,8 @@ import { MenuItem } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 type LinkData = {
-  source: d3.HierarchyPointNode<TreeNode>;
-  target: d3.HierarchyPointNode<TreeNode>;
+  source: d3.HierarchyPointNode<DiagramNode>;
+  target: d3.HierarchyPointNode<DiagramNode>;
 };
 
 @Component({
@@ -66,7 +66,7 @@ type LinkData = {
     DialogModule,
   ],
   standalone: true,
-  templateUrl: './tree-create.component.html',
+  templateUrl: './diagram-create.component.html',
   host: {
     class: 'h-full w-full',
   },
@@ -75,9 +75,13 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
   private store = inject(DiagramStore);
   private formBuilder: FormBuilder = inject(FormBuilder);
   private router: Router = inject(Router);
-  @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
-
-  private createNodeFormGroup(node: TreeNode): FormGroup {
+  @ViewChild('diagramContainer', { static: true })
+  diagramContainer!: ElementRef;
+  @ViewChild('svg', { static: true }) svgRef!: ElementRef;
+  @ViewChild('zoomLayer', { static: true }) zoomLayerRef!: ElementRef;
+  @ViewChild('backgroundLayer', { static: true })
+  backgroundLayerRef!: ElementRef;
+  private createNodeFormGroup(node: DiagramNode): FormGroup {
     return this.formBuilder.group({
       id: [node.id || uuidv4(), [Validators.required]],
       name: [node.name, [Validators.required, Validators.minLength(3)]],
@@ -106,22 +110,18 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
         {
           label: 'File',
           icon: 'fas fa-file-plus',
-          command: () => this.addFileToNode(),
         },
         {
           label: 'Form',
           icon: 'fas fa-file-lines',
-          command: () => this.addFormToNode(),
         },
         {
           label: 'Date Picker',
           icon: 'fas fa-calendar',
-          command: () => this.addDatePickerToNode(),
         },
         {
           label: 'Checklist',
           icon: 'fas fa-list-check',
-          command: () => this.addChecklistToNode(),
         },
       ],
     },
@@ -132,7 +132,6 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
         {
           label: 'Comments',
           icon: 'fas fa-comment-dots',
-          command: () => this.addCommentsToNode(),
         },
       ],
     },
@@ -141,14 +140,8 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       icon: 'fas fa-globe',
       items: [
         {
-          label: 'Embedded Link',
-          icon: 'fas fa-link',
-          command: () => this.addEmbeddedLinkToNode(),
-        },
-        {
           label: 'Google Maps Place',
           icon: 'fas fa-map-location-dot',
-          command: () => this.addGoogleMapsPlaceToNode(),
         },
       ],
     },
@@ -275,7 +268,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     _id: [uuidv4(), [Validators.required]],
     name: ['', [Validators.required, Validators.minLength(3)]],
     description: ['A default tree node structure'],
-    status: [TreeStatus.ACTIVE],
+    status: [DiagramStatus.ACTIVE],
     permissions: [[]],
     createdAt: [new Date()],
     updatedAt: [new Date()],
@@ -291,18 +284,20 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       actions: [],
       widgets: [],
       children: [],
+      x: 0,
+      y: 0,
     }),
   });
 
-  protected editedTree: Partial<Tree> = _.cloneDeep(this.form.value);
+  protected editedDiagram: Partial<Diagram> = _.cloneDeep(this.form.value);
   protected editMode: boolean = false;
 
   protected get isEqual(): boolean {
-    return _.isEqual(this.editedTree, this.form.value);
+    return _.isEqual(this.editedDiagram, this.form.value);
   }
 
   protected sidebarVisible: boolean = false;
-  protected selectedNode: TreeNode | null = null;
+  protected selectedNode: DiagramNode | null = null;
   protected isRootNode: boolean = false;
 
   protected deleteDialogVisible: boolean = false;
@@ -313,12 +308,10 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
   private height = 0;
   private nodeIdCounter = 1;
   private zoom: any;
-  private button: any;
-  private deleteButton: any;
   private currentRotation = 0;
   private isVertical = false;
   private drag: any;
-  private highlightedNode: TreeNode | null = null;
+  private highlightedNode: DiagramNode | null = null;
 
   ngOnInit(): void {
     this.form.get('name')?.valueChanges.subscribe(() => {
@@ -330,14 +323,31 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     this.setDimensions();
     this.initializeSvg();
     this.initializeTree();
+    this.setEnableCanvaDrag();
+  }
+
+  private setEnableCanvaDrag(): void {
+    const svg = d3.select(this.svgRef.nativeElement);
+    const backgroundLayer = d3.select(this.zoomLayerRef.nativeElement);
+
+    const zoomBehavior = d3
+      .zoom()
+      .on('start', () => svg.style('cursor', 'grabbing'))
+      .on('end', () => svg.style('cursor', 'grab'))
+      .on('zoom', (event) => {
+        backgroundLayer.attr('transform', event.transform);
+      });
+
+    svg.call(zoomBehavior);
+    svg.style('cursor', 'grab');
   }
 
   protected resetTree(): void {
     this.form.patchValue({
       _id: uuidv4(),
-      name: 'New Tree',
+      name: 'New Diagram',
       description: 'A new tree structure',
-      status: TreeStatus.ACTIVE,
+      status: DiagramStatus.ACTIVE,
       permissions: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -346,7 +356,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       updatedBy: null,
       archivedBy: null,
       icon: 'fa-project-diagram',
-      rootNode: this.editedTree.rootNode,
+      rootNode: this.editedDiagram.rootNode,
     });
   }
 
@@ -360,8 +370,8 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
 
   protected saveTitle(): void {
     if (this.form.get('name')?.valid) {
-      this.editedTree = {
-        ...this.editedTree,
+      this.editedDiagram = {
+        ...this.editedDiagram,
         name: this.form.get('name')?.value,
       };
       this.editMode = false;
@@ -375,33 +385,30 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
   }
 
   private setDimensions(): void {
-    const element = this.treeContainer.nativeElement;
+    const element = this.diagramContainer.nativeElement;
     this.width = element.clientWidth;
     this.height = element.clientHeight;
   }
 
   private initializeSvg(): void {
-    const width = this.treeContainer.nativeElement.clientWidth;
-    const height = this.treeContainer.nativeElement.clientHeight;
+    const width = this.diagramContainer.nativeElement.clientWidth;
+    const height = this.diagramContainer.nativeElement.clientHeight;
 
     this.zoom = d3
       .zoom()
-      .scaleExtent([0.1, 1])
+      .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
         this.container.attr('transform', event.transform);
       });
 
-    this.svg = d3
-      .select(this.treeContainer.nativeElement)
-      .append('svg')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .call(this.zoom);
+    // Select existing SVG instead of appending
+    this.svg = d3.select(this.svgRef.nativeElement);
 
-    // Create container with initial transform
-    this.container = this.svg
-      .append('g')
-      .attr('transform', `translate(${width / 2}, ${height / 2})`);
+    // Select existing container instead of appending
+    this.container = d3.select(this.zoomLayerRef.nativeElement);
+
+    // Apply zoom behavior to the existing SVG
+    this.svg.call(this.zoom);
 
     // Set initial zoom transform
     this.svg.call(
@@ -441,12 +448,12 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
   private renderTree(): void {
     // Adjust nodeSize to account for dynamic text size
     const treeLayout = d3
-      .tree<TreeNode>()
+      .tree<DiagramNode>()
       .nodeSize(this.isVertical ? [150, 100] : [100, 150]) // Adjust node sizing based on orientation
       .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
 
-    const root = d3.hierarchy<TreeNode>(
-      this.editedTree.rootNode as unknown as TreeNode,
+    const root = d3.hierarchy<DiagramNode>(
+      this.editedDiagram.rootNode as unknown as DiagramNode,
       (d) => d.children || []
     );
 
@@ -476,12 +483,12 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
         node.x = node.y;
         node.y = temp;
         // Save position to node data
-        node.data.x = node.x;
-        node.data.y = node.y;
+        node.data.x = node.x ?? 0;
+        node.data.y = node.y ?? 0;
       } else {
         // Save position to node data for vertical layout
-        node.data.x = node.x;
-        node.data.y = node.y;
+        node.data.x = node.x ?? 0;
+        node.data.y = node.y ?? 0;
       }
     });
 
@@ -532,7 +539,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       .attr('class', 'node')
       .attr(
         'transform',
-        (d: d3.HierarchyPointNode<TreeNode>) => `translate(${d.x},${d.y})`
+        (d: d3.HierarchyPointNode<DiagramNode>) => `translate(${d.x},${d.y})`
       )
       .call(
         d3
@@ -557,7 +564,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
             }
           })
       )
-      .on('click', (_: Event, d: d3.HierarchyPointNode<TreeNode>) =>
+      .on('click', (_: Event, d: d3.HierarchyPointNode<DiagramNode>) =>
         this.onNodeClick(d.data)
       );
 
@@ -581,7 +588,10 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       .style('align-items', 'center')
       .style('position', 'relative')
       .style('padding-bottom', '20px')
-      .each(function (this: HTMLElement, d: d3.HierarchyPointNode<TreeNode>) {
+      .each(function (
+        this: HTMLElement,
+        d: d3.HierarchyPointNode<DiagramNode>
+      ) {
         const div = d3.select(this);
 
         // Add container for icon
@@ -626,7 +636,11 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
 
     // Update rectangle size based on content
     nodeGroup.each(
-      (_: d3.HierarchyPointNode<TreeNode>, i: number, nodes: SVGGElement[]) => {
+      (
+        _: d3.HierarchyPointNode<DiagramNode>,
+        i: number,
+        nodes: SVGGElement[]
+      ) => {
         const group = d3.select(nodes[i]);
         const foreignObject = group
           .select('foreignObject')
@@ -638,8 +652,8 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     );
 
     // Automatically select the root node after rendering
-    if (this.editedTree.rootNode) {
-      this.onNodeClick(this.editedTree.rootNode);
+    if (this.editedDiagram.rootNode) {
+      this.onNodeClick(this.editedDiagram.rootNode);
     }
 
     console.log(this.form.value);
@@ -679,11 +693,11 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     return null;
   }
 
-  private findNodeByFormGroup(formGroup: FormGroup): TreeNode | null {
+  private findNodeByFormGroup(formGroup: FormGroup): DiagramNode | null {
     const name = formGroup.get('name')?.value;
     const description = formGroup.get('description')?.value;
 
-    const findNode = (node: TreeNode): TreeNode | null => {
+    const findNode = (node: DiagramNode): DiagramNode | null => {
       if (node.name === name && node.description === description) {
         return node;
       }
@@ -698,25 +712,30 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       return null;
     };
 
-    return this.editedTree.rootNode ? findNode(this.editedTree.rootNode) : null;
+    return this.editedDiagram.rootNode
+      ? findNode(this.editedDiagram.rootNode)
+      : null;
   }
 
   protected addNode(): void {
     const parentId = this.selectedNode?.id;
 
-    if (!parentId || !this.editedTree.rootNode) return;
+    if (!parentId || !this.editedDiagram.rootNode) return;
 
     // Find parent node's position in the D3 visualization
     const parentElement = this.container
       .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data.id === parentId);
+      .filter(
+        (d: d3.HierarchyPointNode<DiagramNode>) => d.data.id === parentId
+      );
 
     if (parentElement.empty()) return;
 
-    const parentData = parentElement.datum() as d3.HierarchyPointNode<TreeNode>;
+    const parentData =
+      parentElement.datum() as d3.HierarchyPointNode<DiagramNode>;
     const horizontalOffset = 200;
 
-    const newNode: TreeNode = {
+    const newNode: DiagramNode = {
       id: uuidv4(),
       name: 'New Node',
       description: '',
@@ -730,7 +749,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     };
 
     // Update the tree data structure
-    const parentNode = this.findNode(this.editedTree.rootNode, parentId);
+    const parentNode = this.findNode(this.editedDiagram.rootNode, parentId);
     if (parentNode) {
       if (!parentNode.children) {
         parentNode.children = [];
@@ -738,7 +757,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
       parentNode.children.push(newNode);
 
       // Update the form structure by recreating the entire rootNode form
-      const updatedRootNode = _.cloneDeep(this.editedTree.rootNode);
+      const updatedRootNode = _.cloneDeep(this.editedDiagram.rootNode);
       this.form.setControl(
         'rootNode',
         this.createNodeFormGroup(updatedRootNode)
@@ -755,7 +774,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
         const newNodeElement = this.container
           .selectAll('.node')
           .filter(
-            (d: d3.HierarchyPointNode<TreeNode>) => d.data.id === newNode.id
+            (d: d3.HierarchyPointNode<DiagramNode>) => d.data.id === newNode.id
           );
 
         if (!newNodeElement.empty()) {
@@ -782,26 +801,26 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
 
   protected removeNode(): void {
     const nodeId = this.selectedNode?.id;
-    if (!nodeId || !this.editedTree.rootNode) return;
+    if (!nodeId || !this.editedDiagram.rootNode) return;
 
     // Don't allow removing the root node
-    if (nodeId === this.editedTree.rootNode.id) {
+    if (nodeId === this.editedDiagram.rootNode.id) {
       return;
     }
 
     // Find the parent node in the tree structure
-    const parentNode = this.findParentNode(this.editedTree.rootNode, nodeId);
+    const parentNode = this.findParentNode(this.editedDiagram.rootNode, nodeId);
     if (parentNode && parentNode.children) {
       // Store the parent node before removing the selected node
       const parentToSelect = parentNode;
 
       // Remove the node from the children array
       parentNode.children = parentNode.children.filter(
-        (child: TreeNode) => child.id !== nodeId
+        (child: DiagramNode) => child.id !== nodeId
       );
 
       // Update the form structure by recreating the entire rootNode form
-      const updatedRootNode = _.cloneDeep(this.editedTree.rootNode);
+      const updatedRootNode = _.cloneDeep(this.editedDiagram.rootNode);
       this.form.setControl(
         'rootNode',
         this.createNodeFormGroup(updatedRootNode)
@@ -822,9 +841,12 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     console.log(this.form.value);
   }
 
-  private findNode(node: TreeRootNode | TreeNode, id: string): TreeNode | null {
+  private findNode(
+    node: DiagramRootNode | DiagramNode,
+    id: string
+  ): DiagramNode | null {
     if (node.id === id) {
-      return node as TreeNode;
+      return node as DiagramNode;
     }
 
     if ('children' in node && Array.isArray(node.children)) {
@@ -837,19 +859,19 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
   }
 
   private findParentNode(
-    node: Tree | TreeRootNode | TreeNode,
+    node: Diagram | DiagramRootNode | DiagramNode,
     id: string
-  ): TreeNode | null {
-    // Handle Tree type
+  ): DiagramNode | null {
+    // Handle Diagram type
     if ('rootNode' in node && !('children' in node)) {
       return this.findParentNode(node.rootNode, id);
     }
 
-    // Handle TreeRootNode and TreeNode types
+    // Handle TreeRootNode and DiagramNode types
     if ('children' in node && Array.isArray(node.children)) {
       for (const child of node.children) {
         if (child.id === id) {
-          return node as TreeNode;
+          return node as DiagramNode;
         }
         const found = this.findParentNode(child, id);
         if (found) return found;
@@ -952,12 +974,12 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     this.renderTree();
   }
 
-  protected onNodeClick(selectedNode: TreeNode): void {
+  protected onNodeClick(selectedNode: DiagramNode): void {
     // Store current transform before making changes
     const currentTransform = d3.zoomTransform(this.svg.node());
 
     // Update isRootNode status
-    this.isRootNode = selectedNode.id === this.editedTree.rootNode?.id;
+    this.isRootNode = selectedNode.id === this.editedDiagram.rootNode?.id;
 
     // Hide all connection points and lines first
     this.container.selectAll('.connection-group').style('display', 'none');
@@ -977,7 +999,9 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     // Show connection points and lines only for the selected node
     const selectedNodeElement = this.container
       .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode);
+      .filter(
+        (d: d3.HierarchyPointNode<DiagramNode>) => d.data === selectedNode
+      );
 
     selectedNodeElement
       .selectAll('.connection-group')
@@ -1007,7 +1031,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
 
     // Get the selected node's position and create a smooth transition
     const nodeData =
-      selectedNodeElement.datum() as d3.HierarchyPointNode<TreeNode>;
+      selectedNodeElement.datum() as d3.HierarchyPointNode<DiagramNode>;
     if (nodeData) {
       const scale = currentTransform.k; // Maintain current zoom level
 
@@ -1123,9 +1147,9 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     // Re-render the tree with new orientation
     this.renderTree();
 
-    // Get the center point of the SVG for rotation
-    const width = this.treeContainer.nativeElement.clientWidth;
-    const height = this.treeContainer.nativeElement.clientHeight;
+    // Get the center point of the SVG for rotations
+    const width = this.diagramContainer.nativeElement.clientWidth;
+    const height = this.diagramContainer.nativeElement.clientHeight;
 
     // Adjust the container position based on orientation
     if (this.isVertical) {
@@ -1183,8 +1207,8 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
 
   protected save(): void {
     // Save positions before saving the tree
-    if (this.editedTree.rootNode) {
-      this.saveNodePositions(this.editedTree.rootNode);
+    if (this.editedDiagram.rootNode) {
+      this.saveNodePositions(this.editedDiagram.rootNode);
     }
 
     if (this.form.valid) {
@@ -1197,19 +1221,19 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
   protected export(): void {
     // Create a copy of the tree data without any circular references
     const treeData = {
-      _id: this.editedTree._id,
-      name: this.editedTree.name,
-      description: this.editedTree.description,
-      status: this.editedTree.status,
-      permissions: this.editedTree.permissions,
-      createdAt: this.editedTree.createdAt,
-      updatedAt: this.editedTree.updatedAt,
-      archivedAt: this.editedTree.archivedAt,
-      createdBy: this.editedTree.createdBy,
-      updatedBy: this.editedTree.updatedBy,
-      archivedBy: this.editedTree.archivedBy,
-      icon: this.editedTree.icon,
-      rootNode: this.editedTree.rootNode,
+      _id: this.editedDiagram._id,
+      name: this.editedDiagram.name,
+      description: this.editedDiagram.description,
+      status: this.editedDiagram.status,
+      permissions: this.editedDiagram.permissions,
+      createdAt: this.editedDiagram.createdAt,
+      updatedAt: this.editedDiagram.updatedAt,
+      archivedAt: this.editedDiagram.archivedAt,
+      createdBy: this.editedDiagram.createdBy,
+      updatedBy: this.editedDiagram.updatedBy,
+      archivedBy: this.editedDiagram.archivedBy,
+      icon: this.editedDiagram.icon,
+      rootNode: this.editedDiagram.rootNode,
     };
 
     // Convert the tree data to a JSON string with proper formatting
@@ -1224,7 +1248,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     // Create a temporary anchor element to trigger the download
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${this.editedTree.name || 'tree'}-${
+    link.download = `${this.editedDiagram.name || 'tree'}-${
       new Date().toISOString().split('T')[0]
     }.json`;
 
@@ -1253,9 +1277,9 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/tree']);
   }
 
-  private saveNodePositions(node: TreeNode) {
+  private saveNodePositions(node: DiagramNode) {
     // Recursively save positions for all nodes
-    const savePositionsRecursive = (currentNode: TreeNode) => {
+    const savePositionsRecursive = (currentNode: DiagramNode) => {
       if (currentNode.children) {
         currentNode.children.forEach((child) => {
           // Find the node's position in the D3 visualization
@@ -1265,7 +1289,7 @@ export class DiagramCreateComponent implements OnInit, AfterViewInit {
 
           if (!nodeElement.empty()) {
             const nodeData =
-              nodeElement.datum() as d3.HierarchyPointNode<TreeNode>;
+              nodeElement.datum() as d3.HierarchyPointNode<DiagramNode>;
             child.x = nodeData.x;
             child.y = nodeData.y;
 

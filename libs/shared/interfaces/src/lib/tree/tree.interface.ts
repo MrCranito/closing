@@ -2,19 +2,27 @@ import { TemplateRef } from '@angular/core';
 import { User } from '../user/user.interface';
 
 export interface Diagram {
-  _id: string;
+  _id?: string;
   name: string;
   description?: string;
   status: DiagramStatus;
   permissions?: DiagramPermissions[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  archivedAt?: Date;
+  createdBy?: User;
+  updatedBy?: User;
+  archivedBy?: User;
+  icon?: string;
   rootNode: DiagramRootNode;
 }
 
 export interface DiagramPermissions {
-  userId: string;
+  entityId: string;
+  entityType: string;
   level: DiagramPermissionLevel;
+  grandedAt: Date;
+  grandedBy: User;
 }
 
 export enum DiagramPermissionLevel {
@@ -24,72 +32,12 @@ export enum DiagramPermissionLevel {
 }
 
 export enum DiagramStatus {
-  DRAFT = 'DRAFT',
-  PUBLISHED = 'PUBLISHED',
-  ARCHIVED = 'ARCHIVED',
-}
-
-export interface DiagramRootNode {
-  _id: string;
-  name: string;
-  type: string;
-  data?: Record<string, unknown>;
-  position: {
-    x: number;
-    y: number;
-  };
-  children?: DiagramNode[];
-}
-
-export interface DiagramNode {
-  _id: string;
-  name: string;
-  type: string;
-  data?: Record<string, unknown>;
-  position: {
-    x: number;
-    y: number;
-  };
-  children?: DiagramNode[];
-}
-
-export interface Tree {
-  _id?: string;
-  name: string;
-  description?: string;
-  status: TreeStatus;
-  permissions?: TreePermissions[];
-  createdAt?: Date;
-  updatedAt?: Date;
-  archivedAt?: Date;
-  createdBy?: User;
-  updatedBy?: User;
-  archivedBy?: User;
-  icon?: string;
-  rootNode: TreeRootNode;
-}
-
-export interface TreePermissions {
-  entityId: string;
-  entityType: string;
-  level: TreePermissionLevel;
-  grandedAt: Date;
-  grandedBy: User;
-}
-
-export enum TreePermissionLevel {
-  READ = 'READ',
-  WRITE = 'WRITE',
-  ADMIN = 'ADMIN',
-}
-
-export enum TreeStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   ARCHIVED = 'ARCHIVED',
 }
 
-export interface TreeRootNode {
+export interface DiagramRootNode {
   id?: string;
   name: string;
   description?: string;
@@ -99,10 +47,12 @@ export interface TreeRootNode {
   createdBy?: User;
   updatedBy?: User;
   archivedBy?: User;
-  children?: TreeNode[];
+  x: number;
+  y: number;
+  children?: DiagramNode[];
 }
 
-export interface TreeNode {
+export interface DiagramNode {
   id?: string;
   name: string;
   description?: string;
@@ -114,9 +64,9 @@ export interface TreeNode {
   archivedBy?: User;
   widgets?: NodeWidget[];
   actions?: NodeAction[];
-  children?: TreeNode[];
-  x?: number;
-  y?: number;
+  children?: DiagramNode[];
+  x: number;
+  y: number;
 }
 
 export interface NodeWidget {

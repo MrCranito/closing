@@ -10,12 +10,12 @@ import {
 import { CommonModule } from '@angular/common';
 
 import {
-  Tree,
-  TreeNode,
-  TreePermissionLevel,
-  TreeStatus,
-  TreeRootNode,
   User,
+  DiagramNode,
+  DiagramRootNode,
+  Diagram,
+  DiagramStatus,
+  DiagramPermissionLevel,
 } from '@closing/shared/interfaces';
 import * as d3 from 'd3';
 import { ButtonModule } from 'primeng/button';
@@ -35,8 +35,8 @@ import { ActivatedRoute } from '@angular/router';
 import { v4 as uuidv4 } from 'uuid';
 
 type LinkData = {
-  source: d3.HierarchyPointNode<TreeNode>;
-  target: d3.HierarchyPointNode<TreeNode>;
+  source: d3.HierarchyPointNode<DiagramNode>;
+  target: d3.HierarchyPointNode<DiagramNode>;
 };
 
 @Component({
@@ -50,7 +50,7 @@ type LinkData = {
     InputIconModule,
   ],
   standalone: true,
-  templateUrl: './tree-edit.component.html',
+  templateUrl: './diagram-edit.component.html',
   host: {
     class: 'h-full w-full',
   },
@@ -62,7 +62,7 @@ export class DiagramEditComponent implements OnInit {
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
   @ViewChild('treeContainer', { static: true }) treeContainer!: ElementRef;
-  private treeData: Tree = {
+  private treeData: Diagram = {
     _id: 'sales_1',
     name: 'Tree Node Default',
     description: 'A default tree node structure',
@@ -87,7 +87,7 @@ export class DiagramEditComponent implements OnInit {
       {
         entityId: '1',
         entityType: 'tree',
-        level: TreePermissionLevel.READ,
+        level: DiagramPermissionLevel.READ,
         grandedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
         grandedBy: {
           id: '1',
@@ -98,7 +98,7 @@ export class DiagramEditComponent implements OnInit {
         },
       },
     ],
-    status: TreeStatus.ACTIVE,
+    status: DiagramStatus.ACTIVE,
     rootNode: {
       id: '1',
       name: 'Root Node',
@@ -120,11 +120,13 @@ export class DiagramEditComponent implements OnInit {
         isEmailVerified: true,
       },
       children: [],
+      x: 0,
+      y: 0,
     },
   };
 
-  protected tree: Tree = this.treeData;
-  protected editedTree: Tree = _.cloneDeep(this.tree);
+  protected tree: Diagram = this.treeData;
+  protected editedTree: Diagram = _.cloneDeep(this.tree);
   protected editMode: boolean = false;
 
   protected get isEqual(): boolean {
@@ -137,7 +139,7 @@ export class DiagramEditComponent implements OnInit {
   private height = 0;
   private nodeIdCounter = 1;
   private zoom: any;
-  private highlightedNode: TreeNode | null = null; // To store the highlighted node
+  private highlightedNode: DiagramNode | null = null; // To store the highlighted node
   private button: any; // To store the plus button for adding children
   private deleteButton: any; // To store the delete button for removing nodes
 
@@ -225,12 +227,12 @@ export class DiagramEditComponent implements OnInit {
   private renderTree(): void {
     // Adjust nodeSize to account for dynamic text size
     const treeLayout = d3
-      .tree<TreeNode>()
+      .tree<DiagramNode>()
       .nodeSize([150, 100]) // Fixed width for node, but dynamic height based on content
       .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // Increase separation between nodes    const root = d3.hierarchy(this.treeData, d => d.children);
 
-    const root = d3.hierarchy<TreeNode>(
-      this.editedTree.rootNode as unknown as TreeNode,
+    const root = d3.hierarchy<DiagramNode>(
+      this.editedTree.rootNode as unknown as DiagramNode,
       (d) => d.children || []
     );
 
@@ -262,9 +264,9 @@ export class DiagramEditComponent implements OnInit {
       .attr('class', 'node')
       .attr(
         'transform',
-        (d: d3.HierarchyPointNode<TreeNode>) => `translate(${d.x},${d.y})`
+        (d: d3.HierarchyPointNode<DiagramNode>) => `translate(${d.x},${d.y})`
       )
-      .on('click', (_: Event, d: d3.HierarchyPointNode<TreeNode>) =>
+      .on('click', (_: Event, d: d3.HierarchyPointNode<DiagramNode>) =>
         this.onNodeClick(d.data)
       );
 
@@ -292,7 +294,10 @@ export class DiagramEditComponent implements OnInit {
       .style('transition', 'all 0.3s ease')
       .style('cursor', 'pointer')
       .style('border', '1px solid #e5e7eb')
-      .each(function (this: HTMLElement, d: d3.HierarchyPointNode<TreeNode>) {
+      .each(function (
+        this: HTMLElement,
+        d: d3.HierarchyPointNode<DiagramNode>
+      ) {
         const div = d3.select(this);
 
         // Add icon
@@ -353,7 +358,11 @@ export class DiagramEditComponent implements OnInit {
 
     // Update rectangle size based on content
     nodeGroup.each(
-      (_: d3.HierarchyPointNode<TreeNode>, i: number, nodes: SVGGElement[]) => {
+      (
+        _: d3.HierarchyPointNode<DiagramNode>,
+        i: number,
+        nodes: SVGGElement[]
+      ) => {
         const group = d3.select(nodes[i]);
         const foreignObject = group.select('foreignObject');
         foreignObject
@@ -387,14 +396,16 @@ export class DiagramEditComponent implements OnInit {
     `;
   }
 
-  private onNodeClick(selectedNode: TreeNode): void {
+  private onNodeClick(selectedNode: DiagramNode): void {
     // Remove highlight from all nodes (reset to white)
     this.container.selectAll('.node rect').style('fill', 'white');
 
     // Find and highlight the selected node
     this.container
       .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === selectedNode)
+      .filter(
+        (d: d3.HierarchyPointNode<DiagramNode>) => d.data === selectedNode
+      )
       .select('rect')
       .style('fill', '#34d399'); // Apply green color
 
@@ -406,10 +417,10 @@ export class DiagramEditComponent implements OnInit {
     this.createDeleteButton(this.highlightedNode);
   }
 
-  private createPlusButton(node: TreeNode): void {
+  private createPlusButton(node: DiagramNode): void {
     const nodeGroup = this.container
       .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
+      .filter((d: d3.HierarchyPointNode<DiagramNode>) => d.data === node);
 
     // Remove existing plus button if any
     if (this.button) {
@@ -472,10 +483,10 @@ export class DiagramEditComponent implements OnInit {
       });
   }
 
-  private createDeleteButton(node: TreeNode): void {
+  private createDeleteButton(node: DiagramNode): void {
     const nodeGroup = this.container
       .selectAll('.node')
-      .filter((d: d3.HierarchyPointNode<TreeNode>) => d.data === node);
+      .filter((d: d3.HierarchyPointNode<DiagramNode>) => d.data === node);
 
     // Remove existing delete button if any
     if (this.deleteButton) {
@@ -542,7 +553,7 @@ export class DiagramEditComponent implements OnInit {
     const parentNode = this.findNode(this.editedTree.rootNode!, parentId);
 
     if (parentNode) {
-      const newNode: TreeNode = {
+      const newNode: DiagramNode = {
         id: uuidv4(),
         name: 'New Node',
         description: '',
@@ -552,6 +563,8 @@ export class DiagramEditComponent implements OnInit {
         updatedBy: this.editedTree.updatedBy!,
         widgets: [],
         children: [],
+        x: 0,
+        y: 0,
       };
       parentNode.children = parentNode.children || [];
       parentNode.children.push(newNode);
@@ -576,9 +589,12 @@ export class DiagramEditComponent implements OnInit {
     }
   }
 
-  private findNode(node: TreeRootNode | TreeNode, id: string): TreeNode | null {
+  private findNode(
+    node: DiagramRootNode | DiagramNode,
+    id: string
+  ): DiagramNode | null {
     if (node.id === id) {
-      return node as TreeNode;
+      return node as DiagramNode;
     }
 
     if ('children' in node && Array.isArray(node.children)) {
@@ -591,19 +607,19 @@ export class DiagramEditComponent implements OnInit {
   }
 
   private findParentNode(
-    node: Tree | TreeRootNode | TreeNode,
+    node: Diagram | DiagramRootNode | DiagramNode,
     id: string
-  ): TreeNode | null {
+  ): DiagramNode | null {
     // Handle Tree type
     if ('rootNode' in node && !('children' in node)) {
       return this.findParentNode(node.rootNode, id);
     }
 
-    // Handle TreeRootNode and TreeNode types
+    // Handle TreeRootNode and DiagramNode types
     if ('children' in node && Array.isArray(node.children)) {
       for (const child of node.children) {
         if (child.id === id) {
-          return node as TreeNode;
+          return node as DiagramNode;
         }
         const found = this.findParentNode(child, id);
         if (found) return found;
@@ -619,7 +635,7 @@ export class DiagramEditComponent implements OnInit {
   }
 
   private ensureNodeFields(
-    node: TreeNode | TreeRootNode,
+    node: DiagramNode | DiagramRootNode,
     currentUser: User
   ): void {
     const now = new Date();

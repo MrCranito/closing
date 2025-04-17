@@ -1,9 +1,9 @@
 import { Component, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  Tree as Diagram,
-  TreePermissionLevel as DiagramPermissionLevel,
-  TreeStatus as DiagramStatus,
+  Diagram,
+  DiagramPermissionLevel,
+  DiagramStatus,
 } from '@closing/shared/interfaces';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';

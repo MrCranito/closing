@@ -18,13 +18,12 @@ export {
 export { MainNavigationRoutes } from './lib/routes/navigation.enum';
 export { Column } from './lib/table/column.interface';
 export {
-  Tree,
-  TreeRootNode,
+  Diagram,
+  DiagramNode,
   Widget,
-  TreePermissionLevel,
-  TreeStatus,
-  TreePermissions,
-  TreeNode,
+  DiagramPermissionLevel,
+  DiagramStatus,
+  DiagramRootNode,
   NodeAction,
   NodeWidget,
 } from './lib/tree/tree.interface';
